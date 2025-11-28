@@ -61,12 +61,13 @@ lean_lib Material where
 lean_exe material where
   root := `Main
   -- 1. 强制依赖 lbindings
+  -- TODO: here we need to use `needs` instead of `extraDepTargets`
   extraDepTargets := #[``lbindings]
   
   -- 2. 修正：将本地库路径添加到搜索路径，然后链接库
   moreLinkArgs := #[
     -- **添加搜索路径**: -L {workspace}/.lake/build/lib/
-    s!"-L/home/acomage/workspace/material/.lake/build/lib/",
+    s!"-L{__dir__}/.lake/build/lib/",
     -- 链接库: -lbindings
     "-lbindings"
   ]
