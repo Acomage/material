@@ -28,7 +28,7 @@ target bindings.o pkg : FilePath := do
   -- leanc 是 clang 的一个包装器，确保了与 Lean 运行时相同的编译选项
   -- buildO "bindings.c" oFile srcJob weakArgs "leanc"
   let cc := (← IO.getEnv "CC").getD "clang"
-  buildO oFile srcJob weakArgs #[] cc
+  buildO oFile srcJob weakArgs #["-O2"] cc
 
 -- 定义外部库 (External Library)
 -- 这会将上面的 .o 文件打包成静态库，供 Lean 链接
