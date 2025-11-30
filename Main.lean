@@ -5,7 +5,7 @@ open IO
 
 def dealWithImage (imagePath : String) : IO Unit := do
   let img ← loadImage imagePath
-  println s!"Image loaded: {img.width}x{img.height}, channels: {img.channels}"
+  println s!"Image loaded: {img.width}x{img.height}"
   println s!"First 10 pixels (as Int32):\n{(img.toPixelArrayFast.take 10).map (fun x => StringUtils.hexFromArgb x)}"
 
 def dealWithImageFile (path : String) : IO UInt32 := do
