@@ -4,9 +4,14 @@ import Image
 open IO
 
 def dealWithImage (imagePath : String) : IO Unit := do
-  let img ← loadImage imagePath
-  println s!"Image loaded: {img.width}x{img.height}"
-  println s!"First 10 pixels (as Int32):\n{(img.toPixelArrayFast.take 10).map (fun x => StringUtils.hexFromArgb x)}"
+  try
+    let img ← loadImage imagePath
+    println s!"Image loaded: {img.width}x{img.height}"
+    println s!"First 10 pixels (as Int32):\n{(img.data.take 10).map (fun x => StringUtils.hexFromArgb x.toInt32)}"
+  catch ex =>
+    eprintln s!"Failed to load image: {ex}"
+    return
+
 
 def dealWithImageFile (path : String) : IO UInt32 := do
   let file := System.FilePath.mk path
