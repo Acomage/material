@@ -28,7 +28,7 @@ LEAN_EXPORT lean_obj_res lean_load_image(b_lean_obj_arg path_obj) {
 
   // 3. 创建 Lean ByteArray
   // size_t 是字节大小
-  size_t data_size = (size_t)width * height * channels;
+  size_t data_size = (size_t)width * height * 4;
   // 分配一个 sarray (scalar array)，元素大小为 1 字节
   lean_object *byte_array = lean_alloc_sarray(1, data_size, data_size);
 
