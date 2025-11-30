@@ -8,11 +8,11 @@ def QuantizerWu := PUnit
 
 namespace QuantizerWu
 
-def INDEX_BITS : UInt32 := 5
+abbrev INDEX_BITS : UInt32 := 5
 
-def INDEX_COUNT := 33
+abbrev INDEX_COUNT := 33
 
-def TOTAL_SIZE := 35937
+abbrev TOTAL_SIZE := 35937
 
 -- TODO: prove this
 
@@ -24,34 +24,32 @@ def getIndex (r g b : UInt32) : Fin TOTAL_SIZE :=
   have h : n < TOTAL_SIZE := by sorry
   ⟨n, h⟩
 
-def constructHistogram (pixels : Array UInt32) (weights momentsR momentsG momentsB : ST.Ref σ (Vector UInt32 TOTAL_SIZE)) (moments : ST.Ref σ (Vector Float TOTAL_SIZE)) : ST σ Unit := do
+def constructHistogram (pixels : Array UInt32) (moments : ST.Ref σ (Vector (UInt32 × UInt32 × UInt32 × UInt32 × Float) TOTAL_SIZE)) : ST σ Unit := do
   for pixel in pixels do
-    let r := redFromArgb pixel
-    let g := greenFromArgb pixel
-    let b := blueFromArgb pixel
+    let rgb := rgbFromArgb pixel
     let bitsToRemove := 8 - INDEX_BITS
-    let indexR := (r >>> bitsToRemove) + 1
-    let indexG := (g >>> bitsToRemove) + 1
-    let indexB := (b >>> bitsToRemove) + 1
-    let index := getIndex indexR indexG indexB
-    weights.modify (fun w => w.modify index (· + 1))
-    momentsR.modify (fun m => m.modify index (· + r))
-    momentsG.modify (fun m => m.modify index (· + g))
-    momentsB.modify (fun m => m.modify index (· + b))
-    moments.modify (fun m => m.modify index (· + (r * r + g * g + b * b).toFloat))
+    let indexRGB := rgb.map (fun c => (c >>> bitsToRemove) + 1)
+    let index := getIndex indexRGB[0] indexRGB[1] indexRGB[2]
+    moments.modify (fun m => m.modify index fun (w, mr, mg, mb, ms) => (w + 1, mr + rgb[0], mg + rgb[1], mb + rgb[2], ms + (rgb[0] * rgb[0] + rgb[1] * rgb[1] + rgb[2] * rgb[2]).toFloat))
 
 
-def computeMoments (weights momentsR momentsG momentsB : ST.Ref σ (Vector UInt32 TOTAL_SIZE)) (moments : ST.Ref σ (Vector Float TOTAL_SIZE)): ST σ Unit := sorry
-
+/- def computeMoments (weights momentsR momentsG momentsB : ST.Ref σ (Vector UInt32 TOTAL_SIZE)) (moments : ST.Ref σ (Vector Float TOTAL_SIZE)): ST σ Unit := sorry -/
+def computeMoments (moments : ST.Ref σ (Vector (UInt32 × UInt32 × UInt32 × UInt32 × Float) TOTAL_SIZE)): ST σ Unit := do
+    for hr : r in [1:INDEX_COUNT] do
+      let mut area : Vector (UInt32 × UInt32 × UInt32 × UInt32 × Float) INDEX_COUNT := Vector.replicate INDEX_COUNT (0, 0, 0, 0, 0.0)
+      for hg : g in [1:INDEX_COUNT] do
+        let mut line : UInt32 × UInt32 × UInt32 × UInt32 × Float := (0, 0, 0, 0, 0.0)
+        for b in ((Array.finRange (INDEX_COUNT))[1:]) do
+          let index := getIndex r.toUInt32 g.toUInt32 b.toNat.toUInt32
+          line := line + ((←moments.get)[index])
+          area := area.modify b (fun v => v + line)
+          let prevIndex := getIndex (r-1).toUInt32 g.toUInt32 b.toNat.toUInt32
+          moments.modify (fun m => m.modify index (fun x => m[prevIndex] + area[b]))
 
 def QuantizerWu (pixels : Array UInt32) (max_colors : UInt8) : Array UInt32 := runST fun s => do
-  let weightsRef : ST.Ref s (Vector UInt32 TOTAL_SIZE) ← ST.mkRef (Vector.replicate TOTAL_SIZE 0)
-  let momentsRedRef : ST.Ref s (Vector UInt32 TOTAL_SIZE) ← ST.mkRef (Vector.replicate TOTAL_SIZE 0)
-  let momentsGreenRef : ST.Ref s (Vector UInt32 TOTAL_SIZE) ← ST.mkRef (Vector.replicate TOTAL_SIZE 0)
-  let momentsBlueRef : ST.Ref s (Vector UInt32 TOTAL_SIZE) ← ST.mkRef (Vector.replicate TOTAL_SIZE 0)
-  let momentsRef : ST.Ref s (Vector Float TOTAL_SIZE) ← ST.mkRef (Vector.replicate TOTAL_SIZE 0.0)
-  constructHistogram pixels weightsRef momentsRedRef momentsGreenRef momentsBlueRef momentsRef
-  computeMoments weightsRef momentsRedRef momentsGreenRef momentsBlueRef momentsRef
+  let momentsRef : ST.Ref s (Vector (UInt32 × UInt32 × UInt32 × UInt32 × Float) TOTAL_SIZE) ← ST.mkRef (Vector.replicate TOTAL_SIZE (0, 0, 0, 0, 0.0))
+  constructHistogram pixels momentsRef
+  computeMoments momentsRef
   sorry
 
 

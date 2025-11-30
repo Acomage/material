@@ -77,6 +77,13 @@ def greenFromArgb (argb : UInt32) : UInt32 :=
 def blueFromArgb (argb : UInt32) : UInt32 :=
   argb &&& 255
 
+def rgbFromArgb (argb : UInt32) : Vector UInt32 3 :=
+  #v[
+    redFromArgb argb,
+    greenFromArgb argb,
+    blueFromArgb argb
+  ]
+
 def isOpaque (argb : UInt32) : Bool :=
   alphaFromArgb argb >= 255
 

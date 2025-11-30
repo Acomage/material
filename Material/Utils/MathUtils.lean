@@ -62,6 +62,12 @@ end MathUtils
 
 namespace Vector
 
+instance : Add (UInt32 × UInt32 × UInt32 × UInt32 × Float) where
+  add a b :=
+    let (a0, a1, a2, a3, a4) := a
+    let (b0, b1, b2, b3, b4) := b
+    (a0 + b0, a1 + b1, a2 + b2, a3 + b3, a4 + b4)
+
 def modify (v : Vector α n) (m : Fin n) (f : α → α) : Vector α n :=
   have h : (v.toArray.modify (↑m) f).size = n := by grind
   h ▸ (v.toArray.modify m f).toVector
