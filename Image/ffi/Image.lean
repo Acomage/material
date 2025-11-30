@@ -16,25 +16,3 @@ def createImageObj (w h : UInt32) (data : Array UInt32) : Image :=
 -- 使用 @& String 表示借用字符串（borrowed），减少引用计数开销
 @[extern "lean_load_image"]
 opaque loadImage (path : @& String) : IO Image
-
-
-/- def Image.toPixelArrayFast (img : Image) : Array Int32 := runST fun s => do -/
-/-   let w := img.width.toNat -/
-/-   let h := img.height.toNat -/
-/-   let bytes := img.data -/
-/-   let size := w * h -/
-/-   -- 预分配 array -/
-/-   let outRef : ST.Ref s (Array Int32) ← ST.mkRef (Array.emptyWithCapacity size) -/
-/-   let iterRef : ST.Ref s ByteArray.Iterator ← ST.mkRef (ByteArray.iter bytes) -/
-/-   while !(←iterRef.get).atEnd do -/
-/-     let r ← iterRef.modifyGet (fun it => (it.curr, it.next)) -/
-/-     let g ← iterRef.modifyGet (fun it => (it.curr, it.next)) -/
-/-     let b ← iterRef.modifyGet (fun it => (it.curr, it.next)) -/
-/-     let a ← iterRef.modifyGet (fun it => (it.curr, it.next)) -/
-/-     let px : Int32 := -/
-/-       ((a.toUInt32 <<< 24) ||| -/
-/-       (r.toUInt32 <<< 16) ||| -/
-/-       (g.toUInt32 <<< 8)  ||| -/
-/-       (b.toUInt32)).toInt32 -/
-/-     outRef.modify (fun arr => arr.push px) -/
-/-   return ← outRef.get -/

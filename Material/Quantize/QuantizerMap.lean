@@ -12,8 +12,8 @@ def QuantizerMap := PUnit
 
 namespace QuantizerMap
 
-def quantize (pixels : Array Int32) (_ : Int32) : QuantizerResult := runST fun s => do
-  let pixelByCountRef : (ST.Ref s (Std.HashMap Int32 Int32)) ← ST.mkRef Std.HashMap.emptyWithCapacity
+def quantize (pixels : Array UInt32) (_ : UInt8) : QuantizerResult := runST fun s => do
+  let pixelByCountRef : (ST.Ref s (Std.HashMap UInt32 UInt32)) ← ST.mkRef Std.HashMap.emptyWithCapacity
   for pixel in pixels do
     let currentPixelCount := (←pixelByCountRef.get)[pixel]?
     let newPixelCount := match currentPixelCount with

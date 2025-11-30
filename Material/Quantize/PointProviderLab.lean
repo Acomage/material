@@ -20,10 +20,10 @@ def PointProviderLab := PUnit
 
 namespace PointProviderLab
 
-def fromInt (argb : Int32) : Vec3 :=
+def fromInt (argb : UInt32) : Vec3 :=
   labFromArgb argb
 
-def toInt (point : Vec3) : Int32 :=
+def toInt (point : Vec3) : UInt32 :=
   argbFromLab point[0] point[1] point[2]
 
 def distance (c1 c2 : Vec3) : Float :=

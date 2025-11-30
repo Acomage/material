@@ -7,7 +7,7 @@ def dealWithImage (imagePath : String) : IO Unit := do
   try
     let img ← loadImage imagePath
     println s!"Image loaded: {img.width}x{img.height}"
-    println s!"First 10 pixels (as Int32):\n{(img.data.take 10).map (fun x => StringUtils.hexFromArgb x.toInt32)}"
+    println s!"First 10 pixels (as Int32):\n{(img.data.take 10).map (fun x => StringUtils.hexFromArgb x)}"
   catch ex =>
     eprintln s!"Failed to load image: {ex}"
     return
