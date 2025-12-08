@@ -5,8 +5,9 @@ CC      := clang
 ISPC    := ispc
 FUTHARK := futhark
 
-CFLAGS  := -O3 -march=native -mtune=native -ffast-math -fstrict-aliasing \
-           -funroll-loops -fomit-frame-pointer -DNDEBUG
+CFLAGS  := -Ofast -march=native -mtune=native -ffast-math -fstrict-aliasing \
+           -funroll-loops -fomit-frame-pointer -fvectorize -fslp-vectorize \
+           -Rpass=loop-vectorize -Rpass=slp-vectorize -DNDEBUG
 
 LDFLAGS := -lm -lpng -lturbojpeg
 

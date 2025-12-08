@@ -1,6 +1,7 @@
 #include "../build/wu.h"
 #include "load_image.h"
 #include <stdio.h>
+#include <time.h>
 
 int main(int argc, char **argv) {
   if (argc != 2) {
@@ -9,13 +10,16 @@ int main(int argc, char **argv) {
   }
 
   int w, h;
-  unsigned char *rgb = load_image_as_rgb(argv[1], &w, &h);
+  unsigned char *rgb = load_image_subsample(argv[1], 16384, &w, &h);
   if (!rgb) {
     fprintf(stderr, "Failed to load image %s\n", argv[1]);
     return 1;
   }
 
   printf("Loaded %dx%d RGB image\n", w, h);
+
+  struct timespec start, end;
+  clock_gettime(CLOCK_MONOTONIC, &start);
 
   struct futhark_context_config *cfg = futhark_context_config_new();
   struct futhark_context *ctx = futhark_context_new(cfg);
@@ -42,6 +46,13 @@ int main(int argc, char **argv) {
     free(err);
     return 1;
   }
+
+  clock_gettime(CLOCK_MONOTONIC, &end);
+
+  double elapsed =
+      (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+
+  printf("Computation took %.10f seconds\n", elapsed);
 
   for (int i = 0; i < out0; i++) {
     printf("out[%d] = %X\n", i, out_data[i]);
