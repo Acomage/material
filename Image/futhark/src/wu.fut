@@ -91,7 +91,7 @@ def vol ((r0, r1, g0, g1, b0, b1): cube) (moment: [index_count][index_count][ind
   let m000 = moment[r0][g0][b0]
   in add4 (sub4 (sub4 (sub4 m111 m110) m101) m011) (add4 (add4 m100 m010) (sub4 m001 m000))
 
-def variance ((r0, r1, g0, g1, b0, b1): cube) (moments: [index_count][index_count][index_count]v5) : f64 =
+def variance ((r0, r1, g0, g1, b0, b1): cube) (moments: [index_count][index_count][index_count]v5) : f32 =
   let m111 = moments[r1][g1][b1]
   let m110 = moments[r1][g1][b0]
   let m101 = moments[r1][g0][b1]
@@ -107,17 +107,17 @@ def variance ((r0, r1, g0, g1, b0, b1): cube) (moments: [index_count][index_coun
   in (if dw == 0 then 0.0
      else
        let hyp = dr * dr + dg * dg + db * db
-       in f64.i64 dsum - (f64.i64 hyp) / f64.i64 dw)
+       in f32.i64 dsum - (f32.i64 hyp) / f32.i64 dw)
 
-def calculate_axis_scores [n] (half: [n]v4) (leftover: [n]v4) : (i64, f64) =
-  let neg_inf = f64.neg f64.inf
+def calculate_axis_scores [n] (half: [n]v4) (leftover: [n]v4) : (i64, f32) =
+  let neg_inf = f32.neg f32.inf
 
-  let scores : [n]f64 =
+  let scores : [n]f32 =
     map2 (\h l ->
             let (hr, hg, hb, hw) = h
             let (lr, lg, lb, lw) = l
-            let t_half = if hw != 0 then f64.i64 (hr * hr + hg * hg + hb * hb) / f64.i64 hw else neg_inf
-            let t_left = if lw != 0 then f64.i64 (lr * lr + lg * lg + lb * lb) / f64.i64 lw else neg_inf
+            let t_half = if hw != 0 then f32.i64 (hr * hr + hg * hg + hb * hb) / f32.i64 hw else neg_inf
+            let t_left = if lw != 0 then f32.i64 (lr * lr + lg * lg + lb * lb) / f32.i64 lw else neg_inf
             in t_half + t_left)
          half leftover
 
@@ -127,13 +127,13 @@ def calculate_axis_scores [n] (half: [n]v4) (leftover: [n]v4) : (i64, f64) =
 
   let best_val = scores[best]
 
-  in (if f64.isinf best_val || f64.isnan best_val || best_val < 0.0
+  in (if f32.isinf best_val || f32.isnan best_val || best_val < 0.0
       then (-1, -1.0)
       else (best, best_val))
 
 def maximize ((r0, r1, g0, g1, b0, b1): cube)
        (moments4: [index_count][index_count][index_count]v4)
-       : ((i64, f64), (i64, f64), (i64, f64)) =
+       : ((i64, f32), (i64, f32), (i64, f32)) =
   let m000 = moments4[r0][g0][b0]
   let m001 = moments4[r0][g0][b1]
   let m010 = moments4[r0][g1][b0]
@@ -204,7 +204,7 @@ def maximize ((r0, r1, g0, g1, b0, b1): cube)
 
   in ((cut_r, max_r), (cut_g, max_g), (cut_b, max_b))
 
-def argmax_prefix (vals: [max_color_slots]f64) (n: i64) : i64 =
+def argmax_prefix (vals: [max_color_slots]f32) (n: i64) : i64 =
   let idxs = iota n
   in reduce (\best i -> if vals[i] > vals[best] then i else best) 0 idxs
 
@@ -215,9 +215,9 @@ def pack_argb ((r, g, b, w): v4) : i32 =
   let argb64 = (255i64 << 24) | (r' << 16) | (g' << 8) | b'
   in i32.i64 argb64
 
-entry quantize [n] (max_colors: i64) (pixels: [n][3]u8) : (i64, []i32) =
+def quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
   let invalid = max_colors <= 0 || max_colors >= 256 || n == 0
-  in if invalid then (0, (replicate 0 0i32))
+  in if invalid then (replicate 0 0i32)
   else
     let moments = compute_moments pixels
     let moments4 : [index_count][index_count][index_count]v4 =
@@ -227,7 +227,7 @@ entry quantize [n] (max_colors: i64) (pixels: [n][3]u8) : (i64, []i32) =
       replicate max_color_slots (0, 0, 0, 0, 0, 0)
       with [0] = (0, index_count - 1, 0, index_count - 1, 0, index_count - 1)
 
-    let init_var : [max_color_slots]f64 =
+    let init_var : [max_color_slots]f32 =
       replicate max_color_slots 0.0
       with [0] = variance (init_cubes[0]) moments
 
@@ -298,4 +298,4 @@ entry quantize [n] (max_colors: i64) (pixels: [n][3]u8) : (i64, []i32) =
     let colors =
       map (\idx -> pack_argb (vol (final_cubes[idx]) moments4)) (iota used)
 
-    in (max_colors, colors)
+    in colors

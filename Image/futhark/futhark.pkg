@@ -1,0 +1,5 @@
+require {
+  github.com/diku-dk/containers 0.9.0 #0bab0363227b54752889efc128fb9a1438d64a98
+  github.com/diku-dk/sorts 0.6.0 #f448cd990c86c566715915a8fc4182c8c2ff5400
+  github.com/diku-dk/cpprandom 1.4.1 #c95459a4f362a56293cbefe71ef8dcb78b7a333e
+}
