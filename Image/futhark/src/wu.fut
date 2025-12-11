@@ -206,7 +206,7 @@ def maximize ((r0, r1, g0, g1, b0, b1): cube)
 
 def argmax_prefix (vals: [max_color_slots]f32) (n: i64) : i64 =
   let idxs = iota n
-  in reduce (\best i -> if vals[i] > vals[best] then i else best) 0 idxs
+  in reduce_comm (\best i -> if vals[i] > vals[best] then i else best) 0 idxs
 
 def pack_argb ((r, g, b, w): v4) : i32 =
   let r' = if w > 0 then r / w else 0
@@ -237,54 +237,32 @@ def quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
         let cube_curr = cubes[next_idx]
         let ((cut_r, max_r), (cut_g, max_g), (cut_b, max_b)) = maximize cube_curr moments4
 
+        -- Determine which axis to split (0=red, 1=green, 2=blue)
+        let (axis, cut_pos) =
+          if max_r >= max_g && max_r >= max_b then (0i64, cut_r)
+          else if max_g >= max_r && max_g >= max_b then (1i64, cut_g)
+          else (2i64, cut_b)
+
+        -- Extract cube coordinates once
+        let (r0, r1, g0, g1, b0, b1) = cube_curr
+
         let (cubes1, vars1, i_adj) =
-          if max_r >= max_g && max_r >= max_b then
-            let (r0, r1, g0, g1, b0, b1) = cube_curr
-            in if cut_r < 0 then
-                 let vars' = vars with [next_idx] = 0.0
-                 in (cubes, vars', i - 1)
-               else
-                 let cube_new : cube = (cut_r, r1, g0, g1, b0, b1)
-                 let cube_old : cube = (r0, cut_r, g0, g1, b0, b1)
-                 let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
-                 let vols_old = cube_volume cube_old
-                 let vols_new = cube_volume cube_new
-                 let vars' = vars
-                             with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
-                             with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
-                 in (cubes', vars', i)
-
-          else if max_g >= max_r && max_g >= max_b then
-            let (r0, r1, g0, g1, b0, b1) = cube_curr
-            in if cut_g < 0 then
-                 let vars' = vars with [next_idx] = 0.0
-                 in (cubes, vars', i - 1)
-               else
-                 let cube_new : cube = (r0, r1, cut_g, g1, b0, b1)
-                 let cube_old : cube = (r0, r1, g0, cut_g, b0, b1)
-                 let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
-                 let vols_old = cube_volume cube_old
-                 let vols_new = cube_volume cube_new
-                 let vars' = vars
-                             with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
-                             with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
-                 in (cubes', vars', i)
-
+          if cut_pos < 0 then
+            let vars' = vars with [next_idx] = 0.0
+            in (cubes, vars', i - 1)
           else
-            let (r0, r1, g0, g1, b0, b1) = cube_curr
-            in if cut_b < 0 then
-                 let vars' = vars with [next_idx] = 0.0
-                 in (cubes, vars', i - 1)
-               else
-                 let cube_new : cube = (r0, r1, g0, g1, cut_b, b1)
-                 let cube_old : cube = (r0, r1, g0, g1, b0, cut_b)
-                 let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
-                 let vols_old = cube_volume cube_old
-                 let vols_new = cube_volume cube_new
-                 let vars' = vars
-                             with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
-                             with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
-                 in (cubes', vars', i)
+            -- Use match to construct the two new cubes based on split axis
+            let (cube_new, cube_old) = match axis
+              case 0i64 -> ((cut_pos, r1, g0, g1, b0, b1), (r0, cut_pos, g0, g1, b0, b1))
+              case 1i64 -> ((r0, r1, cut_pos, g1, b0, b1), (r0, r1, g0, cut_pos, b0, b1))
+              case _    -> ((r0, r1, g0, g1, cut_pos, b1), (r0, r1, g0, g1, b0, cut_pos))
+            let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
+            let vols_old = cube_volume cube_old
+            let vols_new = cube_volume cube_new
+            let vars' = vars
+                        with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
+                        with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
+            in (cubes', vars', i)
 
         let next_i = i_adj + 1
         let next_choice = argmax_prefix vars1 (i_adj + 1)
