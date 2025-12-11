@@ -255,7 +255,7 @@ def quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
             let (cube_new, cube_old) = match axis
               case 0i64 -> ((cut_pos, r1, g0, g1, b0, b1), (r0, cut_pos, g0, g1, b0, b1))
               case 1i64 -> ((r0, r1, cut_pos, g1, b0, b1), (r0, r1, g0, cut_pos, b0, b1))
-              case _    -> ((r0, r1, g0, g1, cut_pos, b1), (r0, r1, g0, g1, b0, cut_pos))
+              case 2i64 -> ((r0, r1, g0, g1, cut_pos, b1), (r0, r1, g0, g1, b0, cut_pos))
             let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
             let vols_old = cube_volume cube_old
             let vols_new = cube_volume cube_new

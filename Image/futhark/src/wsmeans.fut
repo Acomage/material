@@ -63,7 +63,7 @@ def quantize_wsmeans(input_pixels: [][3]u8)(starting_clusters: []i32): (i64, []i
           ) distances)
         -- Calculate weight of moved points
         let move_mask = map2 (!=) best_indices cluster_indices
-        let moved_weight = reduce_comm (+) 0 (map3 (\m c w -> if m then w else 0) move_mask cluster_indices counts)
+        let moved_weight = reduce_comm (+) 0 (map2 (\m w -> if m then w else 0) move_mask counts)
         let move_ratio = f32.i32 moved_weight / f32.i32 total_weight
         let converged' = move_ratio < MIN_MOVE_RATIO
         in if converged' && iteration > 0 then
