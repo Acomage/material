@@ -121,11 +121,11 @@ def calculate_axis_scores [n] (half: [n]v4) (leftover: [n]v4) : (i64, f32) =
             in t_half + t_left)
          half leftover
 
-  let idxs = iota n
+  let indexed = zip (iota n) scores
 
-  let best = reduce (\best i -> if scores[i] > scores[best] then i else best) 0 idxs
-
-  let best_val = scores[best]
+  let (best, best_val) = reduce_comm (\(i1, v1) (i2, v2) -> 
+                           if v1 > v2 || (v1 == v2 && i1 < i2) then (i1, v1) else (i2, v2)
+                         ) (-1, neg_inf) indexed
 
   in (if f32.isinf best_val || f32.isnan best_val || best_val < 0.0
       then (-1, -1.0)
@@ -205,8 +205,10 @@ def maximize ((r0, r1, g0, g1, b0, b1): cube)
   in ((cut_r, max_r), (cut_g, max_g), (cut_b, max_b))
 
 def argmax_prefix (vals: [max_color_slots]f32) (n: i64) : i64 =
-  let idxs = iota n
-  in reduce (\best i -> if vals[i] > vals[best] then i else best) 0 idxs
+  let indexed = zip (iota n) (take n vals)
+  in (reduce_comm (\(i1, v1) (i2, v2) -> 
+       if v1 > v2 || (v1 == v2 && i1 < i2) then (i1, v1) else (i2, v2)
+     ) (-1, f32.neg f32.inf) indexed).0
 
 def pack_argb ((r, g, b, w): v4) : i32 =
   let r' = if w > 0 then r / w else 0
