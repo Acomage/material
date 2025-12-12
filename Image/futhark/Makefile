@@ -19,18 +19,17 @@ SRC     := src
 all: $(BUILD)/a.out
 
 # 1. Run futhark to generate wu.c and wu.kernels.ispc
-$(BUILD)/celebi.c $(BUILD)/celebi.kernels.ispc: $(SRC)/celebi.fut $(SRC)/wu.fut $(SRC)/wsmeans.fut
-	$(FUTHARK) ispc --library $(SRC)/celebi.fut -o $(BUILD)/celebi
+$(BUILD)/extract.c $(BUILD)/extract.kernels.ispc: $(SRC)/celebi.fut $(SRC)/wu.fut $(SRC)/wsmeans.fut $(SRC)/color.fut $(SRC)/extract.fut $(SRC)/hct.fut $(SRC)/score.fut
+	$(FUTHARK) ispc --library $(SRC)/extract.fut -o $(BUILD)/extract
 
 # 2. Compile ISPC kernels
-$(BUILD)/celebi.kernels.o: $(BUILD)/celebi.kernels.ispc
+$(BUILD)/extract.kernels.o: $(BUILD)/extract.kernels.ispc
 	$(ISPC) -o $@ $< --addressing=32 --pic --woff -O3
 
 # 3. Final binary: clang + your C files + ISPC object
-$(BUILD)/a.out: $(BUILD)/celebi.c $(SRC)/quantize.c $(BUILD)/celebi.kernels.o $(SRC)/load_image.h $(SRC)/sample_image.h
-	$(CC) $(CFLAGS) $(BUILD)/celebi.c $(SRC)/quantize.c $(BUILD)/celebi.kernels.o \
+$(BUILD)/a.out: $(BUILD)/extract.c $(SRC)/quantize.c $(BUILD)/extract.kernels.o $(SRC)/load_image.h
+	$(CC) $(CFLAGS) $(BUILD)/extract.c $(SRC)/quantize.c $(BUILD)/extract.kernels.o \
 		$(LDFLAGS) -o $@
-
 
 # Misc
 clean:

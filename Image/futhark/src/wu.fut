@@ -216,86 +216,83 @@ def pack_argb ((r, g, b, w): v4) : i32 =
   in i32.i64 argb64
 
 def quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
-  let invalid = max_colors <= 0 || max_colors >= 256 || n == 0
-  in if invalid then (replicate 0 0i32)
-  else
-    let moments = compute_moments pixels
-    let moments4 : [index_count][index_count][index_count]v4 =
-      map (\plane -> map (\line -> map to4 line) plane) moments
+  let moments = compute_moments pixels
+  let moments4 : [index_count][index_count][index_count]v4 =
+    map (\plane -> map (\line -> map to4 line) plane) moments
 
-    let init_cubes : [max_color_slots]cube =
-      replicate max_color_slots (0, 0, 0, 0, 0, 0)
-      with [0] = (0, index_count - 1, 0, index_count - 1, 0, index_count - 1)
+  let init_cubes : [max_color_slots]cube =
+    replicate max_color_slots (0, 0, 0, 0, 0, 0)
+    with [0] = (0, index_count - 1, 0, index_count - 1, 0, index_count - 1)
 
-    let init_var : [max_color_slots]f32 =
-      replicate max_color_slots 0.0
-      with [0] = variance (init_cubes[0]) moments
+  let init_var : [max_color_slots]f32 =
+    replicate max_color_slots 0.0
+    with [0] = variance (init_cubes[0]) moments
 
-    let loop_state =
-      loop (cubes, vars, next_idx, i, max_eff, done) = (init_cubes, init_var, 0i64, 1i64, max_colors, false)
-      while i < max_eff && not done do
-        let cube_curr = cubes[next_idx]
-        let ((cut_r, max_r), (cut_g, max_g), (cut_b, max_b)) = maximize cube_curr moments4
+  let loop_state =
+    loop (cubes, vars, next_idx, i, max_eff, done) = (init_cubes, init_var, 0i64, 1i64, max_colors, false)
+    while i < max_eff && not done do
+      let cube_curr = cubes[next_idx]
+      let ((cut_r, max_r), (cut_g, max_g), (cut_b, max_b)) = maximize cube_curr moments4
 
-        let (cubes1, vars1, i_adj) =
-          if max_r >= max_g && max_r >= max_b then
-            let (r0, r1, g0, g1, b0, b1) = cube_curr
-            in if cut_r < 0 then
-                 let vars' = vars with [next_idx] = 0.0
-                 in (cubes, vars', i - 1)
-               else
-                 let cube_new : cube = (cut_r, r1, g0, g1, b0, b1)
-                 let cube_old : cube = (r0, cut_r, g0, g1, b0, b1)
-                 let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
-                 let vols_old = cube_volume cube_old
-                 let vols_new = cube_volume cube_new
-                 let vars' = vars
-                             with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
-                             with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
-                 in (cubes', vars', i)
+      let (cubes1, vars1, i_adj) =
+        if max_r >= max_g && max_r >= max_b then
+          let (r0, r1, g0, g1, b0, b1) = cube_curr
+          in if cut_r < 0 then
+               let vars' = vars with [next_idx] = 0.0
+               in (cubes, vars', i - 1)
+             else
+               let cube_new : cube = (cut_r, r1, g0, g1, b0, b1)
+               let cube_old : cube = (r0, cut_r, g0, g1, b0, b1)
+               let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
+               let vols_old = cube_volume cube_old
+               let vols_new = cube_volume cube_new
+               let vars' = vars
+                           with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
+                           with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
+               in (cubes', vars', i)
 
-          else if max_g >= max_r && max_g >= max_b then
-            let (r0, r1, g0, g1, b0, b1) = cube_curr
-            in if cut_g < 0 then
-                 let vars' = vars with [next_idx] = 0.0
-                 in (cubes, vars', i - 1)
-               else
-                 let cube_new : cube = (r0, r1, cut_g, g1, b0, b1)
-                 let cube_old : cube = (r0, r1, g0, cut_g, b0, b1)
-                 let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
-                 let vols_old = cube_volume cube_old
-                 let vols_new = cube_volume cube_new
-                 let vars' = vars
-                             with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
-                             with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
-                 in (cubes', vars', i)
+        else if max_g >= max_r && max_g >= max_b then
+          let (r0, r1, g0, g1, b0, b1) = cube_curr
+          in if cut_g < 0 then
+               let vars' = vars with [next_idx] = 0.0
+               in (cubes, vars', i - 1)
+             else
+               let cube_new : cube = (r0, r1, cut_g, g1, b0, b1)
+               let cube_old : cube = (r0, r1, g0, cut_g, b0, b1)
+               let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
+               let vols_old = cube_volume cube_old
+               let vols_new = cube_volume cube_new
+               let vars' = vars
+                           with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
+                           with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
+               in (cubes', vars', i)
 
-          else
-            let (r0, r1, g0, g1, b0, b1) = cube_curr
-            in if cut_b < 0 then
-                 let vars' = vars with [next_idx] = 0.0
-                 in (cubes, vars', i - 1)
-               else
-                 let cube_new : cube = (r0, r1, g0, g1, cut_b, b1)
-                 let cube_old : cube = (r0, r1, g0, g1, b0, cut_b)
-                 let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
-                 let vols_old = cube_volume cube_old
-                 let vols_new = cube_volume cube_new
-                 let vars' = vars
-                             with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
-                             with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
-                 in (cubes', vars', i)
+        else
+          let (r0, r1, g0, g1, b0, b1) = cube_curr
+          in if cut_b < 0 then
+               let vars' = vars with [next_idx] = 0.0
+               in (cubes, vars', i - 1)
+             else
+               let cube_new : cube = (r0, r1, g0, g1, cut_b, b1)
+               let cube_old : cube = (r0, r1, g0, g1, b0, cut_b)
+               let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
+               let vols_old = cube_volume cube_old
+               let vols_new = cube_volume cube_new
+               let vars' = vars
+                           with [next_idx] = (if vols_old > 1 then variance cube_old moments else 0.0)
+                           with [i] = (if vols_new > 1 then variance cube_new moments else 0.0)
+               in (cubes', vars', i)
 
-        let next_i = i_adj + 1
-        let next_choice = argmax_prefix vars1 (i_adj + 1)
-        let done' = vars1[next_choice] <= 0.0
-        let max_eff' = if done' then i_adj + 1 else max_eff
-        in (cubes1, vars1, next_choice, next_i, max_eff', done')
+      let next_i = i_adj + 1
+      let next_choice = argmax_prefix vars1 (i_adj + 1)
+      let done' = vars1[next_choice] <= 0.0
+      let max_eff' = if done' then i_adj + 1 else max_eff
+      in (cubes1, vars1, next_choice, next_i, max_eff', done')
 
-      let (final_cubes, _, _, _, max_eff_final, _) = loop_state
-      let used = max_eff_final
+    let (final_cubes, _, _, _, max_eff_final, _) = loop_state
+    let used = max_eff_final
 
-    let colors =
-      map (\idx -> pack_argb (vol (final_cubes[idx]) moments4)) (iota used)
+  let colors =
+    map (\idx -> pack_argb (vol (final_cubes[idx]) moments4)) (iota used)
 
-    in colors
+  in colors

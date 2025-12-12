@@ -1,9 +1,8 @@
 import "color"
 import "../lib/github.com/diku-dk/cpprandom/random"
 import "../lib/github.com/diku-dk/sorts/radix_sort"
--- import "../lib/github.com/diku-dk/containers/arraymap"
 
-def MAX_ITERATIONS: i32 = 100
+def MAX_ITERATIONS: i32 = 10
 def MIN_DELTA_E: f32 = 3.0f32
 
 def dist_sq (p1: [3]f32) (p2: [3]f32): f32 =
@@ -62,6 +61,7 @@ def quantize_wsmeans(input_pixels: [][3]u8)(starting_clusters: []i32): (i64, []i
             (best_indices, false)
           else
             let current_dists = map2 (\p ci -> dist_sq p cluster[ci]) points cluster_indices
+            -- let current_dists = map2 (\i ci -> distances[i][ci]) (indices cluster_indices) cluster_indices
             let dist_change = map2 (\new old -> f32.abs (f32.sqrt new - f32.sqrt old)) best_dists current_dists
             let move_mask = map (\d -> d > MIN_DELTA_E) dist_change
             let any_moved = reduce (||) false move_mask

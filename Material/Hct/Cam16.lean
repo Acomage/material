@@ -52,11 +52,11 @@ def xyzInViewingConditions (cam : Cam16) (viewingConditions : ViewingConditions)
   let rgbF := rgbC.zipWith (· / ·) viewingConditions.rgbD
   rgbF * CAM16RGB_TO_XYZ
 
-def viewed (cam : Cam16) (viewingConditions : ViewingConditions) : Int32 :=
+def viewed (cam : Cam16) (viewingConditions : ViewingConditions) : UInt32 :=
   let xyz := xyzInViewingConditions cam viewingConditions
   argbFromXyz xyz[0] xyz[1] xyz[2]
 
-def toInt (cam : Cam16) : Int32 :=
+def toInt (cam : Cam16) : UInt32 :=
   cam.viewed DEFAULT
 
 def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingConditions) : Cam16 :=
@@ -89,11 +89,11 @@ def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingCondi
   let bstar := mstar * hueRadians.sin
   ⟨hue, c, j, q, m, s, jstar, astar, bstar⟩
 
-def fromIntInViewingConditions (argb : Int32) (viewingConditions : ViewingConditions) : Cam16 :=
+def fromIntInViewingConditions (argb : UInt32) (viewingConditions : ViewingConditions) : Cam16 :=
   let xyz := xyzFromArgb argb
   fromXyzInViewingConditions xyz[0] xyz[1] xyz[2] viewingConditions
 
-def fromInt (argb : Int32) : Cam16 :=
+def fromInt (argb : UInt32) : Cam16 :=
   fromIntInViewingConditions argb DEFAULT
 
 def fromJchInViewingConditions (j c h : Float) (viewingConditions : ViewingConditions) : Cam16 :=

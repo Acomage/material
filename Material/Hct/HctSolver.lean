@@ -208,7 +208,7 @@ def inverseChromaticAdaptation (adapted : Float) : Float :=
   let base := max 0.0 (adaptedAbs * 27.13 / (400.0 - adaptedAbs))
   signum adapted * base ^ (1.0 / 0.42)
 
-def findResultByJ (hueRadians chroma y : Float) : Int32 := runST fun s => do
+def findResultByJ (hueRadians chroma y : Float) : UInt32 := runST fun s => do
   let jRef : (ST.Ref s Float) ← ST.mkRef (y.sqrt * 11.0)
   let viewingConditions := DEFAULT
   let tInnerCoeff := 1 / (1.64 - 0.29 ^ (viewingConditions.n)) ^ 0.73
@@ -251,7 +251,7 @@ def findResultByJ (hueRadians chroma y : Float) : Int32 := runST fun s => do
 
 namespace HctSolver
 
-def solveToInt (hueDegrees chroma lstar : Float) : Int32 :=
+def solveToInt (hueDegrees chroma lstar : Float) : UInt32 :=
   if (chroma < 0.0001 || lstar < 0.0001 || lstar > 99.9999) then
     argbFromLstar lstar
   else
