@@ -1,4 +1,4 @@
-name: Lean Action CI
+name: Lean + Futhark + ISPC CI
 
 on:
   push:
@@ -10,5 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. checkout
       - uses: actions/checkout@v5
+
+      # 2. 安装 Lean / Lake（官方）
       - uses: leanprover/lean-action@v1
+
+      # 3. 安装 Futhark（只需要工具链）
+      - name: Install Futhark
+        uses: diku-dk/install-futhark@v1.1.0
+        with:
+          version: nightly
+
+      # 4. 安装 ISPC
+      - name: Install ISPC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ispc
+
+      # 5. 在指定目录同步 futhark 包
+      - name: Futhark pkg sync
+        working-directory: ./Material/Extract/futhark
+        run: |
+          futhark pkg sync
+
+      # 6. 使用你自己的 Makefile 统一构建
+      - name: Build project
+        run: |
+          make build
+
