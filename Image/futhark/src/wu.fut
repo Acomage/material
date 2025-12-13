@@ -5,7 +5,7 @@ def index_bits : i64 = 5
 def index_count : i64 = 33
 def max_color_slots : i64 = 256
 
-type v5 = (i64, i64, i64, i64, i64)
+type v5 = (i64, i64, i64, i64, f64)
 type v4 = (i64, i64, i64, i64)
 type cube = (i64, i64, i64, i64, i64, i64)
 
@@ -41,23 +41,15 @@ def cube_volume ((r0, r1, g0, g1, b0, b1): cube) : i64 =
 
 def dot_rgb4 ((r, g, b, _): v4) : i64 = r * r + g * g + b * b
 
-def moments_prefix (m0: [index_count][index_count][index_count]v5) : [index_count][index_count][index_count]v5 =
-  let zero_plane : [index_count][index_count]v5 =
-    replicate index_count (replicate index_count zero5)
-
-  let add_plane (a: [index_count][index_count]v5) (b: [index_count][index_count]v5) : [index_count][index_count]v5 =
-    map2 (\row_a row_b -> map2 add5 row_a row_b) a b
-
-  let add_line (a: [index_count]v5) (b: [index_count]v5) : [index_count]v5 =
-    map2 add5 a b
-
-  let m_r : [index_count][index_count][index_count]v5 =
-    scan add_plane zero_plane m0
-
-  let m_g : [index_count][index_count][index_count]v5 =
-    map (\plane -> scan add_line (replicate index_count zero5) plane) m_r
-
-  in map (\plane -> map (\line -> scan add5 zero5 line) plane) m_g
+def moments_prefix (m0: [index_count][index_count][index_count]v5)
+    : [index_count][index_count][index_count]v5 =
+  let n = index_count
+  let m1 = map (map (scan add5 zero5)) m0
+  let m2 = map (\plane -> transpose plane |> map (scan add5 zero5) |> transpose) m1
+  let m3 = tabulate_3d n n n (\g b r -> m2[r][g][b])
+           |> map (map (scan add5 zero5))
+           |> (\arr -> tabulate_3d n n n (\r g b -> arr[g][b][r]))
+  in m3
 
 def compute_moments [n] (pixels: [n][3]u8) : [index_count][index_count][index_count]v5 =
   let shift : i64 = 8 - index_bits
@@ -74,7 +66,7 @@ def compute_moments [n] (pixels: [n][3]u8) : [index_count][index_count][index_co
   let contribs : [n]v5 =
     map (\(r, g, b) ->
       let sq = r * r + g * g + b * b
-      in (r, g, b, 1, sq)) rgb
+      in (r, g, b, 1, f64.i64 sq)) rgb
 
   let m0 = reduce_by_index_3d zeros add5 zero5 idxs contribs
 
@@ -91,7 +83,7 @@ def vol ((r0, r1, g0, g1, b0, b1): cube) (moment: [index_count][index_count][ind
   let m000 = moment[r0][g0][b0]
   in add4 (sub4 (sub4 (sub4 m111 m110) m101) m011) (add4 (add4 m100 m010) (sub4 m001 m000))
 
-def variance ((r0, r1, g0, g1, b0, b1): cube) (moments: [index_count][index_count][index_count]v5) : f32 =
+def variance ((r0, r1, g0, g1, b0, b1): cube) (moments: [index_count][index_count][index_count]v5) : f64 =
   let m111 = moments[r1][g1][b1]
   let m110 = moments[r1][g1][b0]
   let m101 = moments[r1][g0][b1]
@@ -107,17 +99,17 @@ def variance ((r0, r1, g0, g1, b0, b1): cube) (moments: [index_count][index_coun
   in (if dw == 0 then 0.0
      else
        let hyp = dr * dr + dg * dg + db * db
-       in f32.i64 dsum - (f32.i64 hyp) / f32.i64 dw)
+       in dsum - (f64.i64 hyp) / f64.i64 dw)
 
-def calculate_axis_scores [n] (half: [n]v4) (leftover: [n]v4) : (i64, f32) =
-  let neg_inf = f32.neg f32.inf
+def calculate_axis_scores [n] (half: [n]v4) (leftover: [n]v4) : (i64, f64) =
+  let neg_inf = f64.neg f64.inf
 
-  let scores : [n]f32 =
+  let scores : [n]f64 =
     map2 (\h l ->
             let (hr, hg, hb, hw) = h
             let (lr, lg, lb, lw) = l
-            let t_half = if hw != 0 then f32.i64 (hr * hr + hg * hg + hb * hb) / f32.i64 hw else neg_inf
-            let t_left = if lw != 0 then f32.i64 (lr * lr + lg * lg + lb * lb) / f32.i64 lw else neg_inf
+            let t_half = if hw != 0 then f64.i64 (hr * hr + hg * hg + hb * hb) / f64.i64 hw else neg_inf
+            let t_left = if lw != 0 then f64.i64 (lr * lr + lg * lg + lb * lb) / f64.i64 lw else neg_inf
             in t_half + t_left)
          half leftover
 
@@ -127,13 +119,13 @@ def calculate_axis_scores [n] (half: [n]v4) (leftover: [n]v4) : (i64, f32) =
 
   let best_val = scores[best]
 
-  in (if f32.isinf best_val || f32.isnan best_val || best_val < 0.0
+  in (if f64.isinf best_val || f64.isnan best_val || best_val < 0.0
       then (-1, -1.0)
       else (best, best_val))
 
 def maximize ((r0, r1, g0, g1, b0, b1): cube)
        (moments4: [index_count][index_count][index_count]v4)
-       : ((i64, f32), (i64, f32), (i64, f32)) =
+       : ((i64, f64), (i64, f64), (i64, f64)) =
   let m000 = moments4[r0][g0][b0]
   let m001 = moments4[r0][g0][b1]
   let m010 = moments4[r0][g1][b0]
@@ -158,11 +150,11 @@ def maximize ((r0, r1, g0, g1, b0, b1): cube)
                let m101 = moments4[idx][g0][b1]
                let m100 = moments4[idx][g0][b0]
                in add4 (sub4 (sub4 m111 m110) m101) m100) (iota r_span)
-      let half = map (\x -> sub4 x bottom_r) r_slices
+      let half = map (\x -> add4 x bottom_r) r_slices
       let leftover = map (\x -> sub4 whole_rgbw x) half
       let (best_idx, score) = calculate_axis_scores half leftover
-      in if score >= 0.0 then (r_cut + best_idx, score) else (-1, -1.0)
-    else (-1, -1.0)
+      in if score >= 0.0 then (r_cut + best_idx, score) else (-1, 0.0)
+    else (-1, 0.0)
 
   let g_cut = g0 + 1
   let (cut_g, max_g) =
@@ -177,11 +169,11 @@ def maximize ((r0, r1, g0, g1, b0, b1): cube)
                let m011 = moments4[r0][idx][b1]
                let m010 = moments4[r0][idx][b0]
                in add4 (sub4 (sub4 m111 m110) m011) m010) (iota g_span)
-      let half = map (\x -> sub4 x bottom_g) g_slices
+      let half = map (\x -> add4 x bottom_g) g_slices
       let leftover = map (\x -> sub4 whole_rgbw x) half
       let (best_idx, score) = calculate_axis_scores half leftover
-      in if score >= 0.0 then (g_cut + best_idx, score) else (-1, -1.0)
-    else (-1, -1.0)
+      in if score >= 0.0 then (g_cut + best_idx, score) else (-1, 0.0)
+    else (-1, 0.0)
 
   let b_cut = b0 + 1
   let (cut_b, max_b) =
@@ -196,15 +188,15 @@ def maximize ((r0, r1, g0, g1, b0, b1): cube)
                let m011 = moments4[r0][g1][idx]
                let m001 = moments4[r0][g0][idx]
                in add4 (sub4 (sub4 m111 m101) m011) m001) (iota b_span)
-      let half = map (\x -> sub4 x bottom_b) b_slices
+      let half = map (\x -> add4 x bottom_b) b_slices
       let leftover = map (\x -> sub4 whole_rgbw x) half
       let (best_idx, score) = calculate_axis_scores half leftover
-      in if score >= 0.0 then (b_cut + best_idx, score) else (-1, -1.0)
-    else (-1, -1.0)
+      in if score >= 0.0 then (b_cut + best_idx, score) else (-1, 0.0)
+    else (-1, 0.0)
 
   in ((cut_r, max_r), (cut_g, max_g), (cut_b, max_b))
 
-def argmax_prefix (vals: [max_color_slots]f32) (n: i64) : i64 =
+def argmax_prefix (vals: [max_color_slots]f64) (n: i64) : i64 =
   let idxs = iota n
   in reduce (\best i -> if vals[i] > vals[best] then i else best) 0 idxs
 
@@ -215,7 +207,7 @@ def pack_argb ((r, g, b, w): v4) : i32 =
   let argb64 = (255i64 << 24) | (r' << 16) | (g' << 8) | b'
   in i32.i64 argb64
 
-def quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
+entry quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
   let moments = compute_moments pixels
   let moments4 : [index_count][index_count][index_count]v4 =
     map (\plane -> map (\line -> map to4 line) plane) moments
@@ -224,7 +216,7 @@ def quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
     replicate max_color_slots (0, 0, 0, 0, 0, 0)
     with [0] = (0, index_count - 1, 0, index_count - 1, 0, index_count - 1)
 
-  let init_var : [max_color_slots]f32 =
+  let init_var : [max_color_slots]f64 =
     replicate max_color_slots 0.0
     with [0] = variance (init_cubes[0]) moments
 
@@ -253,10 +245,7 @@ def quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
 
         else if max_g >= max_r && max_g >= max_b then
           let (r0, r1, g0, g1, b0, b1) = cube_curr
-          in if cut_g < 0 then
-               let vars' = vars with [next_idx] = 0.0
-               in (cubes, vars', i - 1)
-             else
+            in
                let cube_new : cube = (r0, r1, cut_g, g1, b0, b1)
                let cube_old : cube = (r0, r1, g0, cut_g, b0, b1)
                let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new
@@ -269,10 +258,7 @@ def quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
 
         else
           let (r0, r1, g0, g1, b0, b1) = cube_curr
-          in if cut_b < 0 then
-               let vars' = vars with [next_idx] = 0.0
-               in (cubes, vars', i - 1)
-             else
+            in
                let cube_new : cube = (r0, r1, g0, g1, cut_b, b1)
                let cube_old : cube = (r0, r1, g0, g1, b0, cut_b)
                let cubes' = cubes with [next_idx] = cube_old with [i] = cube_new

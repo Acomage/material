@@ -36,4 +36,3 @@ clean:
 	rm -rf $(BUILD)/*.o $(BUILD)/*.c $(BUILD)/*.ispc $(BUILD)/a.out $(BUILD)/*.h $(BUILD)/*.json
 
 .PHONY: all clean
-
