@@ -2,7 +2,7 @@ import "color"
 import "../lib/github.com/diku-dk/cpprandom/random"
 import "../lib/github.com/diku-dk/sorts/radix_sort"
 
-def MAX_ITERATIONS: i32 = 10
+def MAX_ITERATIONS: i32 = 100
 def MIN_DELTA_E: f32 = 3.0f32
 
 def dist_sq (p1: [3]f32) (p2: [3]f32): f32 =
