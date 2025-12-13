@@ -32,7 +32,7 @@ jobs:
           tar -xzf ispc.tar.gz
 
           # 安装 ispc 可执行文件
-          sudo install -m 0755 ispc-v${ISPC_VERSION}/bin/ispc /usr/local/bin/ispc
+          sudo install -m 0755 ispc-v${ISPC_VERSION}-linux/bin/ispc /usr/local/bin/ispc
 
           # 验证版本
           ispc --version
