@@ -10,36 +10,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. checkout
       - uses: actions/checkout@v5
 
-      # 2. 安装 clang（ubuntu-latest 不保证有 clang）
-      - name: Install clang
+      # 1. 系统依赖（C / 图像库）
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang
+          sudo apt-get install -y \
+            clang \
+            libpng-dev \
+            libjpeg-turbo8-dev \
+            curl \
+            tar
 
-      # 3. 安装 Futhark（只需要工具链）
+      # 2. 安装 ISPC（官方新版本，避免 cbrt 问题）
+      - name: Install ISPC
+        run: |
+          ISPC_VERSION=1.28.2
+          curl -L -o ispc.tar.gz \
+            https://github.com/ispc/ispc/releases/download/v${ISPC_VERSION}/ispc-v${ISPC_VERSION}-linux.tar.gz
+          tar -xzf ispc.tar.gz
+          sudo mv ispc-v${ISPC_VERSION}-linux/ispc /usr/local/bin/ispc
+          ispc --version
+
+      # 3. 安装 Futhark
       - name: Install Futhark
         uses: diku-dk/install-futhark@v1.1.0
         with:
           version: nightly
 
-      # 4. 安装 ISPC
-      - name: Install ISPC
-        run: |
-          sudo apt-get install -y ispc
-
-      # 5. 在指定目录同步 futhark 包
+      # 4. futhark pkg sync（只做同步）
       - name: Futhark pkg sync
         working-directory: ./Material/Extract/futhark
         run: |
           futhark pkg sync
 
-      # 6. 最后运行 Lean Action（它会自动 lake build）
+      # 5. Lean build（最后！）
       - name: Build Lean project
         uses: leanprover/lean-action@v1
         env:
           LEAN_CC: clang
-
 
