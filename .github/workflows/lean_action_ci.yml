@@ -30,7 +30,11 @@ jobs:
           curl -L -o ispc.tar.gz \
             https://github.com/ispc/ispc/releases/download/v${ISPC_VERSION}/ispc-v${ISPC_VERSION}-linux.tar.gz
           tar -xzf ispc.tar.gz
-          sudo mv ispc-v${ISPC_VERSION}-linux/ispc /usr/local/bin/ispc
+
+          # 安装 ispc 可执行文件
+          sudo install -m 0755 ispc-v${ISPC_VERSION}/bin/ispc /usr/local/bin/ispc
+
+          # 验证版本
           ispc --version
 
       # 3. 安装 Futhark
