@@ -585,7 +585,7 @@ partial def primaryFixedFn : Unit → DynamicColor := fun _ =>
   (⟨
     "primary_fixed",
     (fun s => s.primaryPalette),
-    (fun s => if s.isDark then 40.0 else 90.0),
+    (fun s => if isMonoChrome s then 40.0 else 90.0),
     true,
     .some (fun s => highestSurface s),
     .none,
