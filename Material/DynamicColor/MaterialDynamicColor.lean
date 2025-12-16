@@ -626,7 +626,7 @@ def onPrimaryFixedVariant : DynamicColor :=
   ⟨
     "on_primary_fixed_variant",
     (fun s => s.primaryPalette),
-    (fun s => if isMonoChrome s then 90.0 else 20.0),
+    (fun s => if isMonoChrome s then 90.0 else 30.0),
     false,
     .some (fun _ => primaryFixedDim),
     .some (fun _ => primaryFixed),
@@ -733,7 +733,7 @@ def onTertiaryFixedVariant : DynamicColor :=
   ⟨
     "on_tertiary_fixed_variant",
     (fun s => s.tertiaryPalette),
-    (fun s => if isMonoChrome s then 90.0 else 20.0),
+    (fun s => if isMonoChrome s then 90.0 else 30.0),
     false,
     .some (fun _ => tertiaryFixedDim),
     .some (fun _ => tertiaryFixed),
