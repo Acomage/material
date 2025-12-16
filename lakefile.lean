@@ -1,72 +1,93 @@
 import Lake
-open Lake DSL System
+open System Lake DSL
 
-package "Material" where
-  -- 可以在这里添加其他的 package 配置
+package material where
+  precompileModules := true
 
---------------------------------------------------------------------------------
--- FFI (Foreign Function Interface) 编译配置
---------------------------------------------------------------------------------
+def futharkDir : FilePath := "Material" / "Extract" / "futhark"
+def futharkSrc : FilePath := futharkDir / "src"
+def futharkBuild : FilePath := futharkDir / "build"
 
--- 定义 C 文件的编译目标
--- 这会编译 Image/c/bindings.c 并生成 bindings.o
-target bindings.o pkg : FilePath := do
-  -- 定义源文件和头文件目录
-  let cDir := pkg.dir / "Image" / "c"
-  let srcFile := cDir / "bindings.c"
-  let oFile := pkg.buildDir / "Image" / "c" / "bindings.o"
-  
-  -- 创建构建任务，监控 .c 文件的变化
+target futhark.c pkg :  FilePath := do
+  let srcDir := pkg.dir / futharkSrc
+  let buildDir := pkg.dir / futharkBuild
+  let outFile := buildDir / "extract.c"
+  let srcJob ← inputFile (srcDir / "extract.fut") true
+
+  buildFileAfterDep outFile srcJob fun _srcFile => do
+    createParentDirs outFile
+    proc {
+      cmd := "futhark"
+      args := #["ispc", "--library", (srcDir / "extract.fut").toString,
+                "-o", (buildDir / "extract").toString]
+      cwd := pkg.dir
+    }
+
+target ispc.o pkg : FilePath := do
+  let buildDir := pkg.dir / futharkBuild
+  let ispcFile := buildDir / "extract.kernels.ispc"
+  let oFile := buildDir / "extract.kernels.o"
+  let futharkJob ← fetch <| pkg.target ``futhark.c
+
+  buildFileAfterDep oFile futharkJob fun _ => do
+    proc {
+      cmd := "ispc"
+      args := #[ispcFile.toString, "-o", oFile.toString,
+                "--addressing=32", "--pic", "--woff", "-O3"]
+      cwd := pkg.dir
+    }
+
+target extract.o pkg : FilePath := do
+  let buildDir := pkg.dir / futharkBuild
+  let srcDir := pkg.dir / futharkSrc
+  let srcFile := buildDir / "extract.c"
+  let oFile := buildDir / "extract.o"
+  let futharkJob ← fetch <| pkg.target ``futhark.c
+ 
+
+  buildFileAfterDep oFile futharkJob fun _ => do
+    proc {
+      cmd := "clang"
+      args := #["-c", "-O3", "-march=native", "-ffast-math", "-fPIC",
+                "-Wnan-infinity-disabled",
+                "-I", srcDir.toString,
+                srcFile.toString, "-o", oFile.toString]
+      cwd := pkg.dir
+    }
+
+target ffi.o pkg :  FilePath := do
+  let srcDir := pkg.dir / futharkSrc
+  let buildDir := pkg.dir / futharkBuild
+  let srcFile := srcDir / "color_extract_ffi.c"
+  let oFile := buildDir / "color_extract_ffi.o"
+  let futharkJob ← fetch <| pkg.target ``futhark.c
   let srcJob ← inputFile srcFile true
-  
-  -- 关键步骤：配置编译参数
-  -- 1. "-I" (← getLeanIncludeDir).toString : 包含 Lean 自身的头文件 (<lean/lean.h>)
-  -- 2. "-I" cDir.toString               : 包含当前目录，以便能找到 "stb_image.h"
-  let weakArgs := #["-I", (← getLeanIncludeDir).toString, "-I", cDir.toString]
-  
-  -- 使用 "leanc" 作为编译器！
-  -- leanc 是 clang 的一个包装器，确保了与 Lean 运行时相同的编译选项
-  -- buildO "bindings.c" oFile srcJob weakArgs "leanc"
-  let cc := (← IO.getEnv "CC").getD "clang"
-  buildO oFile srcJob weakArgs #[] cc
+  let depJob := futharkJob.mix srcJob
+  buildFileAfterDep oFile depJob fun _ => do
+    let leanInclude ← getLeanIncludeDir
+    proc {
+      cmd := "clang"
+      args := #["-c", "-O3", "-ffast-math", "-fPIC",
+                "-I", leanInclude.toString,
+                "-I", srcDir.toString,
+                "-I", buildDir.toString,
+                srcFile.toString, "-o", oFile.toString]
+      cwd := pkg.dir
+    }
 
--- 定义外部库 (External Library)
--- 这会将上面的 .o 文件打包成静态库，供 Lean 链接
-extern_lib lbindings pkg := do
-  let name := nameToStaticLib "bindings"
-  -- 获取上面定义的 bindings.o 目标
-  let ffiO ← fetch <| pkg.target ``bindings.o
-  buildStaticLib (pkg.staticLibDir / name) #[ffiO]
+extern_lib libextractffi pkg := do
+  let name := nameToStaticLib "extractffi"
+  let ispcO ← fetch <| pkg.target ``ispc.o
+  let extractO ← fetch <| pkg.target ``extract.o
+  let ffiO ← fetch <| pkg.target ``ffi.o
+  buildStaticLib (pkg.staticLibDir / name) #[ispcO, extractO, ffiO]
 
---------------------------------------------------------------------------------
--- Lean 库配置
---------------------------------------------------------------------------------
-
--- 配置 Image 库
--- 将 srcDir 指向 "Image/ffi"，这样 "Image/ffi/Image.lean" 就可以通过 `import Image` 导入
-lean_lib Image where
-  srcDir := "Image/ffi"
-  roots := #[`Image]
-
--- 配置 Material 库
--- 使用默认源码目录（根目录），它会自动找到 Material 文件夹下的代码
 lean_lib Material where
-  roots := #[`Material]
-
---------------------------------------------------------------------------------
--- 可执行文件配置
---------------------------------------------------------------------------------
+  moreLinkArgs := #["-L/usr/lib", "-lm", "-lpng", "-lturbojpeg"]
 
 @[default_target]
 lean_exe material where
   root := `Main
-  -- 1. 强制依赖 lbindings
-  extraDepTargets := #[``lbindings]
-  
-  -- 2. 修正：将本地库路径添加到搜索路径，然后链接库
-  moreLinkArgs := #[
-    -- **添加搜索路径**: -L {workspace}/.lake/build/lib/
-    s!"-L/home/acomage/workspace/material/.lake/build/lib/",
-    -- 链接库: -lbindings
-    "-lbindings"
-  ]
+  moreLinkArgs :=#[
+    "-L/usr/lib", "-lm", "-lpng", "-lturbojpeg",
+    ]

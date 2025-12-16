@@ -1,0 +1,21 @@
+import Material.DynamicColor.Types
+import Material.Hct.Hct
+import Material.Palettes.TonalPalette
+import Material.Utils.MathUtils
+
+open TonalPalette MathUtils
+
+def schemeFruitSalad (color : Hct) (isDark : Bool) (contrastLevel : Float := 0.0) : DynamicScheme :=
+  {
+    sourceColorHct := color,
+    variant := Variant.fruitSalad,
+    isDark := isDark,
+    contrastLevel := contrastLevel,
+    primaryPalette := fromHueAndChroma
+      (sanitizeDegreesDouble (color.hue - 50.0)) 48.0,
+    secondaryPalette := fromHueAndChroma
+      (sanitizeDegreesDouble (color.hue - 50.0)) 36.0,
+    tertiaryPalette := fromHueAndChroma color.hue 36.0,
+    neutralPalette := fromHueAndChroma color.hue 10.0,
+    neutralVariantPalette := fromHueAndChroma color.hue 16.0
+  }

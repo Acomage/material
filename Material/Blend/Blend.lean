@@ -7,7 +7,7 @@ open MathUtils ColorUtils
 
 namespace Blend
 
-def harmonize (designColor sourceColor : Int32) : Int32 :=
+def harmonize (designColor sourceColor : UInt32) : UInt32 :=
   let fromHct := Hct.fromInt designColor
   let toHct := Hct.fromInt sourceColor
   let differenceDegrees := differenceDegrees fromHct.hue toHct.hue
@@ -15,7 +15,7 @@ def harmonize (designColor sourceColor : Int32) : Int32 :=
   let outputHue := sanitizeDegreesDouble (fromHct.hue + rotationDegrees * (rotationDirection fromHct.hue toHct.hue))
   (Hct.fromHct outputHue fromHct.chroma fromHct.tone).toInt
 
-def cam16Ucs (fromArgb toArgb : Int32) (amount : Float) : Int32 :=
+def cam16Ucs (fromArgb toArgb : UInt32) (amount : Float) : UInt32 :=
   let fromCam := Cam16.fromInt fromArgb
   let toCam := Cam16.fromInt toArgb
   let jstar := lerp fromCam.jstar toCam.jstar amount
@@ -23,7 +23,7 @@ def cam16Ucs (fromArgb toArgb : Int32) (amount : Float) : Int32 :=
   let bstar := lerp fromCam.bstar toCam.bstar amount
   (Cam16.fromUcs jstar astar bstar).toInt
 
-def hctHue (fromArgb toArgb : Int32) (amount : Float) : Int32 :=
+def hctHue (fromArgb toArgb : UInt32) (amount : Float) : UInt32 :=
   let ucs := cam16Ucs fromArgb toArgb amount
   let ucsCam := Cam16.fromInt ucs
   let fromCam := Cam16.fromInt fromArgb

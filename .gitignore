@@ -4,3 +4,7 @@
 compile_commands.json
 plan.txt
 /.cache
+stb_image.h
+build
+lib
+res.txt

@@ -32,8 +32,8 @@ def trueDelinearized (rgbComponent : Float) : Float :=
       1.055 * (normalized.pow (1.0 / 2.4)) - 0.055
   delinearized * 255.0
 
-def delinearized (rgbComponent : Float) : Int32 :=
-  MathUtils.clampInt 0 255 (trueDelinearized rgbComponent).toInt32
+def delinearized (rgbComponent : Float) : UInt32 :=
+  MathUtils.clampInt 0 255 (trueDelinearized rgbComponent).toUInt32
 
 def labF (t : Float) : Float :=
   let e := 216.0 / 24389.0
@@ -58,45 +58,52 @@ def yFromLstar (lstar : Float) : Float :=
 def lstarFromY (y : Float) : Float :=
   labF (y / 100.0) * 116.0 - 16.0
 
-def argbFromRgb (red green blue : Int32) : Int32 :=
-  (0xFF000000 : Int32) ||| ((red &&& 255) <<< 16) ||| ((green &&& 255) <<< 8) ||| (blue &&& 255)
+def argbFromRgb (red green blue : UInt32) : UInt32 :=
+  (0xFF000000 : UInt32) ||| ((red &&& 255) <<< 16) ||| ((green &&& 255) <<< 8) ||| (blue &&& 255)
 
-def argbFromLinrgb (linrgb : MathUtils.Vec3) : Int32 :=
+def argbFromLinrgb (linrgb : MathUtils.Vec3) : UInt32 :=
   let v := linrgb.map delinearized
   argbFromRgb v[0] v[1] v[2]
 
-def alphaFromArgb (argb : Int32) : Int32 :=
+def alphaFromArgb (argb : UInt32) : UInt32 :=
   (argb >>> 24) &&& 255
 
-def redFromArgb (argb : Int32) : Int32 :=
+def redFromArgb (argb : UInt32) : UInt32 :=
   (argb >>> 16) &&& 255
 
-def greenFromArgb (argb : Int32) : Int32 :=
+def greenFromArgb (argb : UInt32) : UInt32 :=
   (argb >>> 8) &&& 255
 
-def blueFromArgb (argb : Int32) : Int32 :=
+def blueFromArgb (argb : UInt32) : UInt32 :=
   argb &&& 255
 
-def isOpaque (argb : Int32) : Bool :=
+def rgbFromArgb (argb : UInt32) : Vector UInt32 3 :=
+  #v[
+    redFromArgb argb,
+    greenFromArgb argb,
+    blueFromArgb argb
+  ]
+
+def isOpaque (argb : UInt32) : Bool :=
   alphaFromArgb argb >= 255
 
-def argbFromXyz (x y z : Float) : Int32 :=
+def argbFromXyz (x y z : Float) : UInt32 :=
   argbFromLinrgb (#v[x, y, z] * XYZ_TO_SRGB)
 
-def xyzFromArgb (argb : Int32) : MathUtils.Vec3 :=
+def xyzFromArgb (argb : UInt32) : MathUtils.Vec3 :=
   let r := redFromArgb argb
   let g := greenFromArgb argb
   let b := blueFromArgb argb
-  #v[r, g, b].map (linearized ∘ (Int32.toFloat)) * SRGB_TO_XYZ
+  #v[r, g, b].map (linearized ∘ (UInt32.toFloat)) * SRGB_TO_XYZ
 
-def argbFromLab (l a b : Float) : Int32 :=
+def argbFromLab (l a b : Float) : UInt32 :=
   let fy := (l + 16.0) / 116.0
   let fx := a / 500.0 + fy
   let fz := fy - b / 200.0
   let v := #v[fx, fy, fz].map labInvf * WHITE_POINT_D65
   argbFromLinrgb (v * XYZ_TO_SRGB)
 
-def labFromArgb (argb : Int32) : MathUtils.Vec3 :=
+def labFromArgb (argb : UInt32) : MathUtils.Vec3 :=
   let xyz := xyzFromArgb argb
   let fxyz := (xyz.zipWith (·/·) WHITE_POINT_D65).map labF
   let fx := fxyz[0]
@@ -108,11 +115,11 @@ def labFromArgb (argb : Int32) : MathUtils.Vec3 :=
     200.0 * (fy - fz)
   ]
 
-def argbFromLstar (lstar : Float) : Int32 :=
+def argbFromLstar (lstar : Float) : UInt32 :=
   let component := delinearized (yFromLstar lstar)
   argbFromRgb component component component
 
-def lstarFromArgb (argb : Int32) : Float :=
+def lstarFromArgb (argb : UInt32) : Float :=
   let y := (xyzFromArgb argb)[1]
   lstarFromY y
 

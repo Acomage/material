@@ -9,14 +9,15 @@ structure Hct where
   hue : Float
   chroma : Float
   tone : Float
-  argb : Int32
+  argb : UInt32
+deriving Inhabited
 
 namespace Hct
 
-def toInt (hct : Hct) : Int32 :=
+def toInt (hct : Hct) : UInt32 :=
   hct.argb
 
-def setInteralState (argb : Int32) : Hct :=
+def setInteralState (argb : UInt32) : Hct :=
   let cam := Cam16.fromInt argb
   let tone := ColorUtils.lstarFromArgb argb
   ⟨cam.hue, cam.chroma, tone, argb⟩
@@ -40,7 +41,7 @@ def inViewingConditions (hct : Hct) (vc : ViewingConditions) : Hct :=
   let recastInVc := Cam16.fromXyzInViewingConditions viewedInVc[0] viewedInVc[1] viewedInVc[2] ViewingConditions.DEFAULT
   fromHct recastInVc.hue recastInVc.chroma hct.tone
 
-def fromInt (argb : Int32) : Hct :=
+def fromInt (argb : UInt32) : Hct :=
   setInteralState argb
 
 def isBlue (hue : Float) : Bool :=

@@ -22,7 +22,7 @@ def signum (num : Float) : Float :=
 def lerp (start stop amount : Float) : Float :=
   (1 - amount) * start + amount * stop
 
-def clampInt (min max input : Int32) : Int32 :=
+def clampInt (min max input : UInt32) : UInt32 :=
   if input < min then min
   else if input > max then max
   else input
@@ -32,7 +32,7 @@ def clampDouble (min max input : Float) : Float :=
   else if input > max then max
   else input
 
-def sanitizeDegreesInt (degrees : Int32) : Int32 := degrees % 360
+def sanitizeDegreesInt (degrees : UInt32) : UInt32 := degrees % 360
 
 instance : Mod Float where
   mod a b := a - b * Float.floor (a / b)
@@ -59,3 +59,17 @@ instance : HMul Vec3 Mat3 Vec3 where
   hMul row matrix := matrixMultiply row matrix
 
 end MathUtils
+
+namespace Vector
+
+instance : Add (UInt32 × UInt32 × UInt32 × UInt32 × Float) where
+  add a b :=
+    let (a0, a1, a2, a3, a4) := a
+    let (b0, b1, b2, b3, b4) := b
+    (a0 + b0, a1 + b1, a2 + b2, a3 + b3, a4 + b4)
+
+def modify (v : Vector α n) (m : Fin n) (f : α → α) : Vector α n :=
+  have h : (v.toArray.modify (↑m) f).size = n := by grind
+  h ▸ (v.toArray.modify m f).toVector
+
+end Vector

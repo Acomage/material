@@ -50,8 +50,24 @@ def lighterUnsafe (tone ratio : Float) : Float :=
 
 def darker (tone ratio : Float) : Option Float :=
   if tone < 0.0 || tone > 100.0
-    sorry
+    then none
   else
-    sorry
+    let lightY := yFromLstar tone
+    let darkY := (lightY + 5.0) / ratio - 5.0
+    if darkY < 0.0 || darkY > 100.0
+      then none
+    else
+      let realContrast := ratioOfYs lightY darkY
+      let delta := (realContrast - ratio).abs
+      if realContrast < ratio && delta > CONTRAST_RATIO_EPSILON
+        then none
+      else
+        let returnValue := (lstarFromY darkY) - LUMINANCE_GAMUT_MAP_TOLERANCE
+        if returnValue < 0.0 || returnValue > 100.0
+          then none
+        else some returnValue
+
+def darkerUnsafe (tone ratio : Float) : Float :=
+  (darker tone ratio).getD 0.0
 
 end Contrast
