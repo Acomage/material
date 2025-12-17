@@ -6,10 +6,10 @@ namespace DynamicColor
 
 -- TODO: I don't know why there is a round, if test proof that it is not needed remove it
 def tonePrefersLightForeground (tone : Float) : Bool :=
-  tone.round < 60.0
+  tone < 60.5
 
 def toneAllowsLightForeground (tone : Float) : Bool :=
-  tone.round <= 49.0
+  tone <= 49.5
 
 def foregroundTone (bgTone ratio : Float) : Float :=
   let lighterTone := Contrast.lighterUnsafe bgTone ratio
