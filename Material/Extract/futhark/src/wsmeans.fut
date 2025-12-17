@@ -14,15 +14,22 @@ def dist_sq (p1: [3]f32) (p2: [3]f32): f32 =
 def unique [n] (pixels: [n]i32): (i64, []i32, []i32) =
   let sorted = radix_sort_int i32.num_bits i32.get_bit pixels
   let flags = map2 (!=) sorted (rotate (-1) sorted)
-  let flags = [true] ++ (drop 1 flags) :> [n]bool
+  let flags = [false] ++ (drop 1 flags) :> [n]bool
   let indices = scan (+) 0 (map i64.bool flags)
-  let num_unique = last indices
-  let indices = map (\x -> x - 1) indices
-  let dest_vals = replicate num_unique 0i32
-  let dest_counts = replicate num_unique 0i32
-  let unique_vals = reduce_by_index dest_vals (\_ y -> y) 0 indices sorted
-  let unique_counts = reduce_by_index dest_counts (+) 0 indices (replicate n 1)
+  let num_unique = (last indices) + 1
+  let unique_vals = hist (\ _ y -> y) 0 num_unique indices sorted
+  let unique_counts = hist (+) 0 num_unique indices (replicate n 1i32)
   in (num_unique, unique_vals, unique_counts)
+
+def unique' [n] (colors_out:[n]i32) (counts_out:[n]i32): ([]i32, []i32) =
+  let (sorted, sorted_counts) = unzip (radix_sort_int_by_key (\s -> s.0) i32.num_bits i32.get_bit (zip colors_out counts_out))
+  let flags = map2 (!=) sorted (rotate (-1) sorted)
+  let flags = [false] ++ (drop 1 flags) :> [n]bool
+  let indices = scan (+) 0 (map i64.bool flags)
+  let num_unique = (last indices) + 1
+  let unique_vals = hist (\_ y -> y) 0 num_unique indices sorted
+  let unique_counts = hist (+) 0 num_unique indices sorted_counts
+  in (unique_vals, unique_counts)
 
 def build_point_data (input_pixels: []i32): (i64, [][3]f32, []i32) =
   let (num_pixels, pixels, counts) = unique input_pixels
@@ -35,7 +42,8 @@ def initialize_assignments(point_count: i64)(cluster_count: i64): [point_count]i
   let rngs = minstd_rand.split_rng point_count rng
   in (unzip (map (\rng -> d.rand (0, cluster_count-1) rng) rngs)).1
 
-def quantize_wsmeans(input_pixels: [][3]u8)(starting_clusters: []i32): (i64, []i32, []i32) =
+
+def quantize_wsmeans(input_pixels: [][3]u8)(starting_clusters: []i32): ([]i32, []i32) =
     let input_pixels = map (\rgb -> rgb_to_int (map i32.u8 rgb)) input_pixels
     let (num_points, points, counts) = build_point_data input_pixels
     let points = points :> [num_points][3]f32
@@ -84,5 +92,7 @@ def quantize_wsmeans(input_pixels: [][3]u8)(starting_clusters: []i32): (i64, []i
     let final_counts = hist (+) 0 cluster_count final_indices counts
     let final_colors = map lab_to_int final_clusters
     let (colors_out, counts_out) = unzip (filter (\(_, c) -> c > 0) (zip final_colors final_counts))
-    let len = length colors_out
-    in (len, colors_out, counts_out)
+    -- let len = length colors_out
+    -- in (len, colors_out, counts_out)
+    let (unique_colors, unique_counts) = unique' colors_out counts_out
+    in (unique_colors, unique_counts)

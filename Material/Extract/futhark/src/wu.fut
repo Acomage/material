@@ -207,7 +207,7 @@ def pack_argb ((r, g, b, w): v4) : i32 =
   let argb64 = (255i64 << 24) | (r' << 16) | (g' << 8) | b'
   in i32.i64 argb64
 
-entry quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
+def quantize_wu [n] (max_colors: i64) (pixels: [n][3]u8) : []i32 =
   let moments = compute_moments pixels
   let moments4 : [index_count][index_count][index_count]v4 =
     map (\plane -> map (\line -> map to4 line) plane) moments

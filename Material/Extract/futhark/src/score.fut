@@ -16,8 +16,8 @@ def ranked_suggestions (colors:[]i32)(populations:[]i32): ([]i32, []f32) =
   let hue_population = hist (+) 0 360 huesi64 populations
   let proportions = map (\hp -> f32.i32 hp / polulation_sum) hue_population
   let (indices, values) =
-    tabulate_2d 30 360 (\hue offset ->
-      (((hue + offset - 14) % 360), proportions[hue])
+    tabulate_2d 360 30 (\hue offset ->
+      (((hue + offset - 14)%360), proportions[hue])
     ) |> flatten |> unzip
   let hue_excited_proportions = hist (+) 0 360 indices values
   let (colors_cam_filted,
