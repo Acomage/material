@@ -4,7 +4,6 @@ public import Material.Utils.ColorUtils
 public import Material.Utils.MathUtils
 import all Init.Data.Array.QSort.Basic
 
-public section
 
 open MathUtils
 
@@ -50,7 +49,7 @@ def getRelativeTemperature (input : Hct) : Float :=
   if range == 0.0 then 0.5 else
     (inputTemp - coldestTemp) / range
 
-def getComplement(input : Hct) : Hct := Id.run do
+public def getComplement(input : Hct) : Hct := Id.run do
   let hctByHue := getHctsByHue input
   let coldest := getColdest input
   let coldestHue := coldest.hue
@@ -83,7 +82,7 @@ def getComplement(input : Hct) : Hct := Id.run do
     hueAddend := hueAddend + 1.0
   return answer
 
-def getAnalogousColors(input : Hct)(count : Int32 := 5)(divisions : Int32 := 12) : Array Hct := Id.run do
+public def getAnalogousColors(input : Hct)(count : Int32 := 5)(divisions : Int32 := 12) : Array Hct := Id.run do
   let hctbyHue := getHctsByHue input
   let startHue := input.hue.toInt64.toNatClampNeg
   -- TODO: prove index valid

@@ -1,7 +1,6 @@
 module
 public import Material.Utils.ColorUtils
 
-public section
 
 open ColorUtils
 
@@ -26,10 +25,10 @@ def ratioOfYs (y1 y2 : Float) : Float :=
   let darker := min y1 y2
   (lighter + 5.0) / (darker + 5.0)
 
-def rationOfTones (t1 t2 : Float) : Float :=
+public def rationOfTones (t1 t2 : Float) : Float :=
   ratioOfYs (yFromLstar t1) (yFromLstar t2)
 
-def lighter (tone ratio : Float) : Option Float :=
+public def lighter (tone ratio : Float) : Option Float :=
   if tone < 0.0 || tone > 100.0
     then none
   else
@@ -48,10 +47,10 @@ def lighter (tone ratio : Float) : Option Float :=
           then none
         else some returnValue
 
-def lighterUnsafe (tone ratio : Float) : Float :=
+public def lighterUnsafe (tone ratio : Float) : Float :=
   (lighter tone ratio).getD 100.0
 
-def darker (tone ratio : Float) : Option Float :=
+public def darker (tone ratio : Float) : Option Float :=
   if tone < 0.0 || tone > 100.0
     then none
   else
@@ -70,7 +69,7 @@ def darker (tone ratio : Float) : Option Float :=
           then none
         else some returnValue
 
-def darkerUnsafe (tone ratio : Float) : Float :=
+public def darkerUnsafe (tone ratio : Float) : Float :=
   (darker tone ratio).getD 0.0
 
 end Contrast

@@ -3,8 +3,6 @@ public import Material.Hct.Hct
 public import Material.Hct.HctSolver
 public import Material.Utils.ColorUtils
 
-public section
-
 open ColorUtils
 
 -- TODO:find some way to implement caching
@@ -16,7 +14,7 @@ open ColorUtils
   allow mutable fields in structures, so we will omit
   the cache for now.
 -/
-structure TonalPalette where
+public structure TonalPalette where
   hue : Float
   chroma : Float
   keyColor : Hct
@@ -36,10 +34,10 @@ def tone (tonalPalette : TonalPalette) (tone : UInt32) : UInt32 :=
     (Hct.fromHct tonalPalette.hue tonalPalette.chroma tone.toFloat).toInt
 /- termination_by (if tone == 99 then 1 else 0) -/
 
-def getHct (tonalPalette : TonalPalette) (tone : Float) : Hct :=
+public def getHct (tonalPalette : TonalPalette) (tone : Float) : Hct :=
   Hct.fromHct tonalPalette.hue tonalPalette.chroma tone
 
-def getArgb (tonalPalette : TonalPalette) (tone : Float) : UInt32 :=
+public def getArgb (tonalPalette : TonalPalette) (tone : Float) : UInt32 :=
   HctSolver.solveToInt tonalPalette.hue tonalPalette.chroma tone
 
 /--
@@ -86,13 +84,13 @@ def create (keyColor : KeyColor) : Hct := runST fun s => do
 
 end KeyColor
 
-def fromHct (hct : Hct) : TonalPalette :=
+public def fromHct (hct : Hct) : TonalPalette :=
   ⟨hct.hue, hct.chroma, hct⟩
 
-def fromInt (argb : UInt32) : TonalPalette :=
+public def fromInt (argb : UInt32) : TonalPalette :=
   fromHct (Hct.fromInt argb)
 
-def fromHueAndChroma (hue chroma : Float) : TonalPalette :=
+public def fromHueAndChroma (hue chroma : Float) : TonalPalette :=
   let keyColor := KeyColor.create ⟨hue, chroma⟩
   ⟨hue, chroma, keyColor⟩
 

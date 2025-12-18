@@ -1,4 +1,4 @@
-moudle
+module
 public import Material.Hct.Hct
 public import Material.Palettes.TonalPalette
 public import Material.Scheme.DynamicScheme

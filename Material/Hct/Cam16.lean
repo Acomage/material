@@ -3,9 +3,8 @@ public import Material.Utils.ColorUtils
 public import Material.Utils.MathUtils
 public import Material.Hct.ViewingConditions
 
-public section
 
-structure Cam16 where
+public structure Cam16 where
   hue : Float
   chroma : Float
   j : Float
@@ -27,7 +26,7 @@ def distance (cam1 cam2 : Cam16) : Float :=
   let dEprime := (dJ * dJ + dA * dA + dB * dB).sqrt
   1.41 * dEprime ^ 0.63
 
-def xyzInViewingConditions (cam : Cam16) (viewingConditions : ViewingConditions) : Vec3 :=
+public def xyzInViewingConditions (cam : Cam16) (viewingConditions : ViewingConditions) : Vec3 :=
   let alpha := if cam.j == 0.0
     then 0.0
     else cam.chroma / (cam.j / 100.0).sqrt
@@ -59,10 +58,10 @@ def viewed (cam : Cam16) (viewingConditions : ViewingConditions) : UInt32 :=
   let xyz := xyzInViewingConditions cam viewingConditions
   argbFromXyz xyz[0] xyz[1] xyz[2]
 
-def toInt (cam : Cam16) : UInt32 :=
+public def toInt (cam : Cam16) : UInt32 :=
   cam.viewed DEFAULT
 
-def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingConditions) : Cam16 :=
+public def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingConditions) : Cam16 :=
   let rgbT := #v[x, y, z] * XYZ_TO_CAM16RGB
   let rgbD := viewingConditions.rgbD * rgbT
   let rgbAf := rgbD.map (fun cD => (viewingConditions.fl * cD.abs / 100.0) ^ 0.42)
@@ -96,7 +95,7 @@ def fromIntInViewingConditions (argb : UInt32) (viewingConditions : ViewingCondi
   let xyz := xyzFromArgb argb
   fromXyzInViewingConditions xyz[0] xyz[1] xyz[2] viewingConditions
 
-def fromInt (argb : UInt32) : Cam16 :=
+public def fromInt (argb : UInt32) : Cam16 :=
   fromIntInViewingConditions argb DEFAULT
 
 def fromJchInViewingConditions (j c h : Float) (viewingConditions : ViewingConditions) : Cam16 :=
@@ -123,7 +122,7 @@ def fromUcsInViewingConditions (jstar astar bstar : Float) (viewingConditions : 
   let j := jstar / (1.0 - (jstar - 100.0) * 0.007)
   fromJchInViewingConditions j c h viewingConditions
 
-def fromUcs(jstar astar bstar : Float) : Cam16 :=
+public def fromUcs(jstar astar bstar : Float) : Cam16 :=
   fromUcsInViewingConditions jstar astar bstar DEFAULT
 
 end Cam16

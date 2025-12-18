@@ -3,7 +3,6 @@ public import Material.DynamicColor.Types
 public import Material.Dislike.DislikeAnalyzer
 public import Material.DynamicColor.DynamicColor
 
-public section
 
 open MathUtils DislikeAnalyzer
 
@@ -273,7 +272,7 @@ def onTertiaryFixed : ToneFn :=
 def onTertiaryFixedVariant : ToneFn :=
   withTwoBackgrounds tertiaryFixedDim tertiaryFixed ⟨3.0, 4.5, 7.0, 11.0⟩ (monoChromeConst 90.0 30.0)
 
-def allMaterialDynamicColors : List DynamicColor :=
+public def allMaterialDynamicColors : List DynamicColor :=
   [
     ⟨"primaryPaletteKeyColor", primaryPaletteKeyColor, .primary⟩,
     ⟨"secondaryPaletteKeyColor", secondaryPaletteKeyColor, .secondary⟩,

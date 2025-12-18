@@ -4,7 +4,7 @@ public import Material.Palettes.TonalPalette
 public import Material.Utils.MathUtils
 public import Material.Scheme.DynamicScheme
 
-pulic section
+public section
 
 open TonalPalette MathUtils
 
