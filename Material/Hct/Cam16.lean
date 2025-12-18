@@ -26,6 +26,19 @@ open MathUtils ColorUtils ViewingConditions
 /-   let dEprime := (dJ * dJ + dA * dA + dB * dB).sqrt -/
 /-   1.41 * dEprime ^ 0.63 -/
 
+
+def XYZ_TO_CAM16RGB := #v[
+  #v[0.401288,  0.650173, -0.051461],
+  #v[-0.250268, 1.204414, 0.045854 ],
+  #v[-0.002079, 0.048952, 0.953127 ]
+]
+
+def CAM16RGB_TO_XYZ := #v[
+  #v[1.8620678,  -1.0112547,  0.14918678 ],
+  #v[0.38752654, 0.62144744,  -0.00897398],
+  #v[-0.0158415, -0.03412294, 1.0499644  ]
+]
+
 public def xyzInViewingConditions (cam : Cam16) (viewingConditions : ViewingConditions) : Vec3 :=
   let alpha := if cam.j == 0.0
     then 0.0
