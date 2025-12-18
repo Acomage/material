@@ -3,6 +3,7 @@ public import Material.Hct.Cam16
 public import Material.Hct.Hct
 public import Material.Utils.ColorUtils
 public import Material.Utils.MathUtils
+public import Material.Blend.Cam16jab
 
 public section
 
@@ -24,7 +25,7 @@ def cam16Ucs (fromArgb toArgb : UInt32) (amount : Float) : UInt32 :=
   let jstar := lerp fromCam.jstar toCam.jstar amount
   let astar := lerp fromCam.astar toCam.astar amount
   let bstar := lerp fromCam.bstar toCam.bstar amount
-  (Cam16.fromUcs jstar astar bstar).toInt
+  (Cam16jab.fromUcs jstar astar bstar).toInt
 
 def hctHue (fromArgb toArgb : UInt32) (amount : Float) : UInt32 :=
   let ucs := cam16Ucs fromArgb toArgb amount
