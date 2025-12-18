@@ -1,7 +1,10 @@
-import Material.Hct.Cam16
-import Material.Hct.Hct
-import Material.Utils.ColorUtils
-import Material.Utils.MathUtils
+module
+public import Material.Hct.Cam16
+public import Material.Hct.Hct
+public import Material.Utils.ColorUtils
+public import Material.Utils.MathUtils
+
+public section
 
 open MathUtils ColorUtils
 

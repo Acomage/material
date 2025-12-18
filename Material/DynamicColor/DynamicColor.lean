@@ -1,7 +1,10 @@
-import Material.DynamicColor.Types
-import Material.Contrast.Contrast
-import Material.DynamicColor.ContrastCurve
-import Material.Utils.MathUtils
+module
+public import Material.DynamicColor.Types
+public import Material.Contrast.Contrast
+public import Material.DynamicColor.ContrastCurve
+public import Material.Utils.MathUtils
+
+
 -- some helpers
 
 open Contrast MathUtils
@@ -19,7 +22,7 @@ def isMonoChrome (scheme : DynamicScheme) : Bool :=
 def tonePrefersLightForeground (tone : Float) : Bool :=
   tone < 60.5
 
-def foregroundTone (bgTone ratio : Float) : Float :=
+public def foregroundTone (bgTone ratio : Float) : Float :=
   let lighterTone := Contrast.lighterUnsafe bgTone ratio
   let darkerTone := Contrast.darkerUnsafe bgTone ratio
   let lighterRatio := Contrast.rationOfTones lighterTone bgTone
@@ -31,7 +34,7 @@ def foregroundTone (bgTone ratio : Float) : Float :=
   else
     if darkerRatio >= ratio || darkerRatio >= lighterRatio then darkerTone else lighterTone
 
-def findDesiredChromaByTone (hue chroma tone : Float) (by_decreasing_tone : Bool) : Float := Id.run do
+public def findDesiredChromaByTone (hue chroma tone : Float) (by_decreasing_tone : Bool) : Float := Id.run do
   let mut answer := tone
   let mut closest_to_chroma := Hct.fromHct hue chroma tone
   if closest_to_chroma.chroma < chroma then
@@ -56,44 +59,44 @@ def findDesiredChromaByTone (hue chroma tone : Float) (by_decreasing_tone : Bool
   tone_delta_pair == .none
   background == .none
 -/
-def constantTone (tone : Float) : ToneFn :=
+public def constantTone (tone : Float) : ToneFn :=
   fun _ => tone
 
 /--
   tone_delta_pair == .none
   background == .none
 -/
-def fromPalette (fn : DynamicScheme → TonalPalette) : ToneFn :=
+public def fromPalette (fn : DynamicScheme → TonalPalette) : ToneFn :=
   fun ds => (fn ds).keyColor.tone
 
 /--
   tone_delta_pair == .none
   background == .none
 -/
-def fromCurve (curve : ContrastCurve) : ToneFn :=
+public def fromCurve (curve : ContrastCurve) : ToneFn :=
   fun ds => curve.get ds.contrastLevel
 
 /--
   tone_delta_pair == .none
   background == .none
 -/
-def darkLight (dark light : ToneFn) : ToneFn :=
+public def darkLight (dark light : ToneFn) : ToneFn :=
   fun ds => if ds.isDark then dark ds else light ds
 
 /--
   tone_delta_pair == .none
   background == .none
 -/
-def darkLightConst (dark light : Float) : ToneFn :=
+public def darkLightConst (dark light : Float) : ToneFn :=
   fun ds => if ds.isDark then dark else light
 
-def fidelity (yes no : ToneFn) : ToneFn :=
+public def fidelity (yes no : ToneFn) : ToneFn :=
   fun ds => if isFidelity ds then yes ds else no ds
 
-def monoChrome (yes no : ToneFn) : ToneFn :=
+public def monoChrome (yes no : ToneFn) : ToneFn :=
   fun ds => if isMonoChrome ds then yes ds else no ds
 
-def monoChromeConst (yes no : Float) : ToneFn :=
+public def monoChromeConst (yes no : Float) : ToneFn :=
   fun ds => if isMonoChrome ds then yes else no
 
 /--
@@ -102,7 +105,7 @@ def monoChromeConst (yes no : Float) : ToneFn :=
   isBackground == false
   second_background == .none
 -/
-def withContrast
+public def withContrast
   (bg : ToneFn)
   (curve : ContrastCurve)
   : ToneFn → ToneFn :=
@@ -122,7 +125,7 @@ def withContrast
   second_background == .some bg2
   isBackground == false
 -/
-def withTwoBackgrounds
+public def withTwoBackgrounds
   (bg1 bg2 : ToneFn)
   (curve : ContrastCurve)
   : ToneFn → ToneFn :=
@@ -150,7 +153,7 @@ def withTwoBackgrounds
 /--
   tone_delta_pair == .some roleA roleB delta polarity stay_together
 -/
-def toneFnPair
+public def toneFnPair
   (roleA roleB : ToneFn)
   (delta : Float)
   (polarity : TonePolarity)
@@ -193,7 +196,7 @@ def toneFnPair
         f_tone := 49
   return (if aIsNearer then n_tone else f_tone, if aIsNearer then f_tone else n_tone)
 
-def pairConbinator
+public def pairConbinator
   (delta : Float)
   (polarity : TonePolarity)
   (stayTogether : Bool)
@@ -202,7 +205,7 @@ def pairConbinator
     (fun s => (toneFnPair roleA roleB delta polarity stayTogether s).1,
      fun s => (toneFnPair roleA roleB delta polarity stayTogether s).2)
 
-def getPalette (palette : Palette) : DynamicScheme → TonalPalette :=
+public def getPalette (palette : Palette) : DynamicScheme → TonalPalette :=
   fun ds =>
     match palette with
     | .primary          => ds.primaryPalette
@@ -212,5 +215,5 @@ def getPalette (palette : Palette) : DynamicScheme → TonalPalette :=
     | .neutralVariant   => ds.neutralVariantPalette
     | .error            => ds.errorPalette
 
-def getArgb (dc : DynamicColor) (scheme : DynamicScheme) : UInt32 :=
+public def getArgb (dc : DynamicColor) (scheme : DynamicScheme) : UInt32 :=
   (getPalette dc.palette scheme).getArgb (dc.toneFn scheme)

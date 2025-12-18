@@ -1,4 +1,6 @@
-import Material.Hct.Hct
+module
+public import Material.Hct.Hct
+
 
 open Hct
 
@@ -10,7 +12,7 @@ def isDisliked (hct : Hct) : Bool :=
   let tonePasses := (hct.tone).round < 65.0
   huePasses && chromaPasses && tonePasses
 
-def fixIfDisliked (hct : Hct) : Hct :=
+public def fixIfDisliked (hct : Hct) : Hct :=
   if isDisliked hct then
     fromHct hct.hue hct.chroma 70.0
   else

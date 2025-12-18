@@ -1,7 +1,9 @@
-import Material.Utils.ColorUtils
-import Material.Utils.MathUtils
-import Material.Hct.ViewingConditions
-import Material.Hct.Cam16
+module
+public import Material.Utils.ColorUtils
+public import Material.Utils.MathUtils
+public import Material.Hct.ViewingConditions
+public import Material.Hct.Cam16
+
 
 open MathUtils ColorUtils ViewingConditions
 
@@ -251,7 +253,7 @@ def findResultByJ (hueRadians chroma y : Float) : UInt32 := runST fun s => do
 
 namespace HctSolver
 
-def solveToInt (hueDegrees chroma lstar : Float) : UInt32 :=
+public def solveToInt (hueDegrees chroma lstar : Float) : UInt32 :=
   if (chroma < 0.0001 || lstar < 0.0001 || lstar > 99.9999) then
     argbFromLstar lstar
   else
@@ -264,8 +266,8 @@ def solveToInt (hueDegrees chroma lstar : Float) : UInt32 :=
       let linrgb := bisectToLimit y hueRadians
       argbFromLinrgb linrgb
 
-def solveToCam (hueDegress chroma lstar : Float) : Cam16 :=
-  let argb := solveToInt hueDegress chroma lstar
-  Cam16.fromInt argb
+/- public def solveToCam (hueDegress chroma lstar : Float) : Cam16 := -/
+/-   let argb := solveToInt hueDegress chroma lstar -/
+/-   Cam16.fromInt argb -/
 
 end HctSolver

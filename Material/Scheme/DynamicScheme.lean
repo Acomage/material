@@ -1,4 +1,7 @@
-import Material.Palettes.TonalPalette
+module
+public import Material.Palettes.TonalPalette
+
+public section
 
 inductive Variant
   | monoChrome

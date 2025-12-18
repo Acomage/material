@@ -1,3 +1,6 @@
+module
+
+
 namespace ColorExtract
 
 /-- External C function for color extraction -/
@@ -14,7 +17,7 @@ opaque extractColorsImpl : @& String → UInt32 → Array UInt32 × UInt32
     - `Array UInt32`: Array of extracted colors in 0xRRGGBB format
     - `Nat`: Actual number of colors extracted (may be less than requested)
 -/
-def extractColors (path : String) (desiredCount : Nat := 4) : IO (Array UInt32 × Nat) := do
+public def extractColors (path : String) (desiredCount : Nat := 4) : IO (Array UInt32 × Nat) := do
   let count := UInt32.ofNat (min desiredCount 128)
   let (colors, actualCount) := extractColorsImpl path count
   return (colors, actualCount.toNat)

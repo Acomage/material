@@ -83,11 +83,13 @@ extern_lib libextractffi pkg := do
   buildStaticLib (pkg.staticLibDir / name) #[ispcO, extractO, ffiO]
 
 lean_lib Material where
+  leanOptions := #[⟨`experimental.module, true⟩]
   moreLinkArgs := #["-L/usr/lib", "-lm", "-lpng", "-lturbojpeg"]
 
 @[default_target]
 lean_exe material where
   root := `Main
+  leanOptions := #[⟨`experimental.module, true⟩]
   moreLinkArgs :=#[
     "-L/usr/lib", "-lm", "-lpng", "-lturbojpeg",
     ]

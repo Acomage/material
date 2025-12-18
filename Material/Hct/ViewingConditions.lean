@@ -1,7 +1,9 @@
-import Material.Utils.ColorUtils
-import Material.Utils.MathUtils
+module
+public import Material.Utils.ColorUtils
+public import Material.Utils.MathUtils
 
-structure ViewingConditions where
+
+public structure ViewingConditions where
   n : Float
   aw : Float
   nbb : Float
@@ -15,13 +17,13 @@ structure ViewingConditions where
 
 namespace Cam16
 
-def XYZ_TO_CAM16RGB := #v[
+public def XYZ_TO_CAM16RGB := #v[
   #v[0.401288,  0.650173, -0.051461],
   #v[-0.250268, 1.204414, 0.045854 ],
   #v[-0.002079, 0.048952, 0.953127 ]
 ]
 
-def CAM16RGB_TO_XYZ := #v[
+public def CAM16RGB_TO_XYZ := #v[
   #v[1.8620678,  -1.0112547,  0.14918678 ],
   #v[0.38752654, 0.62144744,  -0.00897398],
   #v[-0.0158415, -0.03412294, 1.0499644  ]
@@ -59,6 +61,6 @@ def make (whitePoint : Vec3 := WHITE_POINT_D65)
   let aw := (#v[2.0, 1.0, 0.05] * rgbA).sum * nbb
   ⟨n, aw, nbb, nbb, c, f, rgbD, fl, fl ^ 0.25, z⟩
 
-def DEFAULT : ViewingConditions := make
+public def DEFAULT : ViewingConditions := make
 
 end ViewingConditions

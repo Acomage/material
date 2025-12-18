@@ -1,7 +1,10 @@
-import Material.Hct.Hct
-import Material.Palettes.TonalPalette
-import Material.Scheme.DynamicScheme
-import Material.DynamicColor.DynamicScheme
+module
+public import Material.Hct.Hct
+public import Material.Palettes.TonalPalette
+public import Material.Scheme.DynamicScheme
+public import Material.DynamicColor.DynamicScheme
+
+public section
 
 def hues : Vector Float 9 := #v[0, 41, 61, 101, 131, 181, 251, 301, 360]
 def secondaryRotations : Vector Float 9 := #v[18, 15, 10, 12, 15, 18, 15, 12, 12]

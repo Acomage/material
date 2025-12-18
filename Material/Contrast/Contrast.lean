@@ -1,4 +1,6 @@
-import Material.Utils.ColorUtils
+module
+public import Material.Utils.ColorUtils
+
 
 open ColorUtils
 
@@ -8,25 +10,25 @@ def LUMINANCE_GAMUT_MAP_TOLERANCE := 0.4
 
 namespace Contrast
 
-def RATIO_MIN := 1.0
+-- def RATIO_MIN := 1.0
 
-def RATIO_MAX := 21.0
+-- def RATIO_MAX := 21.0
 
-def RATIO_30 := 3.0
+-- def RATIO_30 := 3.0
 
-def RATIO_45 := 4.5
+-- def RATIO_45 := 4.5
 
-def RATIO_70 := 7.0
+-- def RATIO_70 := 7.0
 
 def ratioOfYs (y1 y2 : Float) : Float :=
   let lighter := max y1 y2
   let darker := min y1 y2
   (lighter + 5.0) / (darker + 5.0)
 
-def rationOfTones (t1 t2 : Float) : Float :=
+public def rationOfTones (t1 t2 : Float) : Float :=
   ratioOfYs (yFromLstar t1) (yFromLstar t2)
 
-def lighter (tone ratio : Float) : Option Float :=
+public def lighter (tone ratio : Float) : Option Float :=
   if tone < 0.0 || tone > 100.0
     then none
   else
@@ -45,10 +47,10 @@ def lighter (tone ratio : Float) : Option Float :=
           then none
         else some returnValue
 
-def lighterUnsafe (tone ratio : Float) : Float :=
+public def lighterUnsafe (tone ratio : Float) : Float :=
   (lighter tone ratio).getD 100.0
 
-def darker (tone ratio : Float) : Option Float :=
+public def darker (tone ratio : Float) : Option Float :=
   if tone < 0.0 || tone > 100.0
     then none
   else
@@ -67,7 +69,7 @@ def darker (tone ratio : Float) : Option Float :=
           then none
         else some returnValue
 
-def darkerUnsafe (tone ratio : Float) : Float :=
+public def darkerUnsafe (tone ratio : Float) : Float :=
   (darker tone ratio).getD 0.0
 
 end Contrast
