@@ -1,6 +1,6 @@
-import Material.DynamicColor.Types
 import Material.Hct.Hct
 import Material.Palettes.TonalPalette
+import Material.Scheme.DynamicScheme
 
 open TonalPalette
 

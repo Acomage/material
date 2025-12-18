@@ -1,6 +1,6 @@
-import Material.DynamicColor.Types
 import Material.Hct.Hct
 import Material.Palettes.TonalPalette
+import Material.Scheme.DynamicScheme
 import Material.DynamicColor.DynamicScheme
 
 def hues : Vector Float 9 := #v[0, 21, 51, 121, 151, 191, 271, 321, 360]
