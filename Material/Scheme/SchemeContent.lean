@@ -1,8 +1,8 @@
-import Material.DynamicColor.Types
 import Material.Hct.Hct
 import Material.Palettes.TonalPalette
 import Material.Temperature.TemperatureCache
 import Material.Dislike.DislikeAnalyzer
+import Material.Scheme.DynamicScheme
 
 open TonalPalette DislikeAnalyzer Temperature
 

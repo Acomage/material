@@ -1,11 +1,11 @@
-import Material.DynamicColor.Types
 import Material.Hct.Hct
 import Material.Palettes.TonalPalette
+import Material.Scheme.DynamicScheme
 import Material.DynamicColor.DynamicScheme
 
-def hues : Array Float := #[0, 41, 61, 101, 131, 181, 251, 301, 360]
-def secondaryRotations : Array Float := #[18, 15, 10, 12, 15, 18, 15, 12, 12]
-def tertiaryRotations : Array Float := #[35, 30, 20, 25, 30, 35, 30, 25, 25]
+def hues : Vector Float 9 := #v[0, 41, 61, 101, 131, 181, 251, 301, 360]
+def secondaryRotations : Vector Float 9 := #v[18, 15, 10, 12, 15, 18, 15, 12, 12]
+def tertiaryRotations : Vector Float 9 := #v[35, 30, 20, 25, 30, 35, 30, 25, 25]
 
 
 open TonalPalette DynamicScheme

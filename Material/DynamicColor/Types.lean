@@ -1,4 +1,6 @@
 import Material.Palettes.TonalPalette
+import Material.Hct.Hct
+import Material.Scheme.DynamicScheme
 
 structure ContrastCurve where
   low : Float
@@ -7,62 +9,23 @@ structure ContrastCurve where
   high : Float
 deriving Inhabited
 
-inductive Variant
-  | monoChrome
-  | neutral
-  | tonalSpot
-  | vibrant
-  | expressive
-  | fidelity
-  | content
-  | rainbow
-  | fruitSalad
-
-structure DynamicScheme where
-  sourceColorHct : Hct
-  variant : Variant
-  isDark : Bool
-  contrastLevel : Float
-  primaryPalette : TonalPalette
-  secondaryPalette : TonalPalette
-  tertiaryPalette : TonalPalette
-  neutralPalette : TonalPalette
-  neutralVariantPalette : TonalPalette
-  errorPalette : TonalPalette := TonalPalette.fromHueAndChroma 25.0 84.0
-
 inductive TonePolarity
   | darker
   | lighter
   | nearer
   | farther
 
-mutual
-  structure ToneDeltaPair where
-    role_a : DynamicColor
-    role_b : DynamicColor
-    delta : Float
-    polarity : TonePolarity
-    stay_together : Bool
+inductive Palette
+  | primary
+  | secondary
+  | tertiary
+  | neutral
+  | neutralVariant
+  | error
 
-  structure DynamicColor where
-    name : String
-    palette : DynamicScheme → TonalPalette
-    tone : DynamicScheme → Float
-    isBackground : Bool
-    background : Option (DynamicScheme → DynamicColor)
-    second_background : Option (DynamicScheme → DynamicColor)
-    contrast_curve : Option ContrastCurve
-    tone_delta_pair : Option (DynamicScheme → ToneDeltaPair)
-end
+abbrev ToneFn := DynamicScheme → Float
 
-instance : Inhabited DynamicColor where
-  default := {
-    name := ""
-    palette := fun _ => Inhabited.default
-    tone := fun _ => 50.0
-    isBackground := false
-    background := none
-    second_background := none
-    contrast_curve := none
-    tone_delta_pair := none
-  }
+structure DynamicColor where
+  name : String
+  toneFn : ToneFn
+  palette : Palette
