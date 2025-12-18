@@ -192,6 +192,7 @@ def bisectToLimit (y targetHue : Float) : Vec3 := runST fun s => do
             let mPlane := (lPlane + rPlane) / 2
             -- maybe we can prove that mPlane is always in [0, 255], but not now
             -- so we just clamp it
+            -- TODO: review this later
             let mPlane' := clampToFin255 mPlane
             let midPlaneCoordinate := CRITICAL_PLANES[mPlane']
             let mid := setCoordinate left midPlaneCoordinate right axis
