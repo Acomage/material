@@ -1,6 +1,9 @@
-import Material.Hct.Hct
-import Material.Hct.HctSolver
-import Material.Utils.ColorUtils
+module
+public import Material.Hct.Hct
+public import Material.Hct.HctSolver
+public import Material.Utils.ColorUtils
+
+public section
 
 open ColorUtils
 

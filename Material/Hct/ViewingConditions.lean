@@ -1,5 +1,8 @@
-import Material.Utils.ColorUtils
-import Material.Utils.MathUtils
+module
+public import Material.Utils.ColorUtils
+public import Material.Utils.MathUtils
+
+public section
 
 structure ViewingConditions where
   n : Float

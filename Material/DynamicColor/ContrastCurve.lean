@@ -1,4 +1,7 @@
-import Material.DynamicColor.Types
+module
+public import Material.DynamicColor.Types
+
+public section
 
 open MathUtils
 

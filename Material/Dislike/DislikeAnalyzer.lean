@@ -1,4 +1,7 @@
-import Material.Hct.Hct
+module
+public import Material.Hct.Hct
+
+public section
 
 open Hct
 

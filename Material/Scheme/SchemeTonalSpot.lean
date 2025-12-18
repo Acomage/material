@@ -1,7 +1,10 @@
-import Material.Hct.Hct
-import Material.Palettes.TonalPalette
-import Material.Utils.MathUtils
-import Material.Scheme.DynamicScheme
+module
+public import Material.Hct.Hct
+public import Material.Palettes.TonalPalette
+public import Material.Utils.MathUtils
+public import Material.Scheme.DynamicScheme
+
+public section
 
 open TonalPalette MathUtils
 

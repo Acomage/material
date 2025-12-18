@@ -1,6 +1,10 @@
-import Material.DynamicColor.Types
-import Material.Dislike.DislikeAnalyzer
-import Material.DynamicColor.DynamicColor
+module
+public import Material.DynamicColor.Types
+public import Material.Dislike.DislikeAnalyzer
+public import Material.DynamicColor.DynamicColor
+
+public section
+
 open MathUtils DislikeAnalyzer
 
 

@@ -1,4 +1,7 @@
-import Material.Utils.MathUtils
+module
+public import Material.Utils.MathUtils
+
+public section
 
 def SRGB_TO_XYZ : MathUtils.Mat3 := #v[
   #v[0.41233895, 0.35762064, 0.18051042],

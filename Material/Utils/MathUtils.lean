@@ -1,3 +1,7 @@
+module
+
+public section
+
 namespace MathUtils
 
 abbrev Pi := 3.14159265358979323846

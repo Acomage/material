@@ -1,6 +1,9 @@
-import Material.Palettes.TonalPalette
-import Material.Hct.Hct
-import Material.Scheme.DynamicScheme
+module
+public import Material.Palettes.TonalPalette
+public import Material.Hct.Hct
+public import Material.Scheme.DynamicScheme
+
+public section
 
 structure ContrastCurve where
   low : Float

@@ -1,4 +1,7 @@
-import Material.Utils.ColorUtils
+module
+public import Material.Utils.ColorUtils
+
+public section
 
 open ColorUtils
 

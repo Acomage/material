@@ -1,7 +1,10 @@
-import Material.Utils.ColorUtils
-import Material.Hct.Cam16
-import Material.Hct.HctSolver
-import Material.Hct.ViewingConditions
+module
+public import Material.Utils.ColorUtils
+public import Material.Hct.Cam16
+public import Material.Hct.HctSolver
+public import Material.Hct.ViewingConditions
+
+public section
 
 open HctSolver
 

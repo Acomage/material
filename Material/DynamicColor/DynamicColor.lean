@@ -1,7 +1,11 @@
-import Material.DynamicColor.Types
-import Material.Contrast.Contrast
-import Material.DynamicColor.ContrastCurve
-import Material.Utils.MathUtils
+module
+public import Material.DynamicColor.Types
+public import Material.Contrast.Contrast
+public import Material.DynamicColor.ContrastCurve
+public import Material.Utils.MathUtils
+
+public section
+
 -- some helpers
 
 open Contrast MathUtils

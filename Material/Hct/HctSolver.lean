@@ -1,7 +1,10 @@
-import Material.Utils.ColorUtils
-import Material.Utils.MathUtils
-import Material.Hct.ViewingConditions
-import Material.Hct.Cam16
+module
+public import Material.Utils.ColorUtils
+public import Material.Utils.MathUtils
+public import Material.Hct.ViewingConditions
+public import Material.Hct.Cam16
+
+public section
 
 open MathUtils ColorUtils ViewingConditions
 

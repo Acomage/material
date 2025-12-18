@@ -1,4 +1,6 @@
+module
 import Material.Utils.ColorUtils
+public section
 
 namespace StringUtils
 

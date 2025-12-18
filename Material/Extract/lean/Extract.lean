@@ -1,3 +1,7 @@
+module
+
+public section
+
 namespace ColorExtract
 
 /-- External C function for color extraction -/

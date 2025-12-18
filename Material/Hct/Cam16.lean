@@ -1,6 +1,9 @@
-import Material.Utils.ColorUtils
-import Material.Utils.MathUtils
-import Material.Hct.ViewingConditions
+module
+public import Material.Utils.ColorUtils
+public import Material.Utils.MathUtils
+public import Material.Hct.ViewingConditions
+
+public section
 
 structure Cam16 where
   hue : Float

@@ -1,9 +1,12 @@
-import Material.Utils.MathUtils
-import Material.Hct.Hct
-import Material.DynamicColor.Types
-import Material.DynamicColor.MaterialDynamicColor
-import Material.DynamicColor.DynamicColor
-import Material.Utils.StringUtils
+module
+public import Material.Utils.MathUtils
+public import Material.Hct.Hct
+public import Material.DynamicColor.Types
+public import Material.DynamicColor.MaterialDynamicColor
+public import Material.DynamicColor.DynamicColor
+public import Material.Utils.StringUtils
+
+public section
 
 open MathUtils
 
