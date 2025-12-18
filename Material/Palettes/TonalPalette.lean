@@ -34,8 +34,8 @@ def tone (tonalPalette : TonalPalette) (tone : UInt32) : UInt32 :=
     (Hct.fromHct tonalPalette.hue tonalPalette.chroma tone.toFloat).toInt
 /- termination_by (if tone == 99 then 1 else 0) -/
 
-public def getHct (tonalPalette : TonalPalette) (tone : Float) : Hct :=
-  Hct.fromHct tonalPalette.hue tonalPalette.chroma tone
+/- public def getHct (tonalPalette : TonalPalette) (tone : Float) : Hct := -/
+/-   Hct.fromHct tonalPalette.hue tonalPalette.chroma tone -/
 
 public def getArgb (tonalPalette : TonalPalette) (tone : Float) : UInt32 :=
   HctSolver.solveToInt tonalPalette.hue tonalPalette.chroma tone
@@ -87,8 +87,8 @@ end KeyColor
 public def fromHct (hct : Hct) : TonalPalette :=
   ⟨hct.hue, hct.chroma, hct⟩
 
-public def fromInt (argb : UInt32) : TonalPalette :=
-  fromHct (Hct.fromInt argb)
+/- public def fromInt (argb : UInt32) : TonalPalette := -/
+/-   fromHct (Hct.fromInt argb) -/
 
 public def fromHueAndChroma (hue chroma : Float) : TonalPalette :=
   let keyColor := KeyColor.create ⟨hue, chroma⟩

@@ -19,12 +19,12 @@ namespace Cam16
 
 open MathUtils ColorUtils ViewingConditions
 
-def distance (cam1 cam2 : Cam16) : Float :=
-  let dJ := cam1.jstar - cam2.jstar
-  let dA := cam1.astar - cam2.astar
-  let dB := cam1.bstar - cam2.bstar
-  let dEprime := (dJ * dJ + dA * dA + dB * dB).sqrt
-  1.41 * dEprime ^ 0.63
+/- def distance (cam1 cam2 : Cam16) : Float := -/
+/-   let dJ := cam1.jstar - cam2.jstar -/
+/-   let dA := cam1.astar - cam2.astar -/
+/-   let dB := cam1.bstar - cam2.bstar -/
+/-   let dEprime := (dJ * dJ + dA * dA + dB * dB).sqrt -/
+/-   1.41 * dEprime ^ 0.63 -/
 
 public def xyzInViewingConditions (cam : Cam16) (viewingConditions : ViewingConditions) : Vec3 :=
   let alpha := if cam.j == 0.0
@@ -110,8 +110,8 @@ def fromJchInViewingConditions (j c h : Float) (viewingConditions : ViewingCondi
   let bstar := mstar * hueRadians.sin
   ⟨h, c, j, q, m, s, jstar, astar, bstar⟩
 
-def fromJch (j c h : Float) : Cam16 :=
-  fromJchInViewingConditions j c h DEFAULT
+/- def fromJch (j c h : Float) : Cam16 := -/
+/-   fromJchInViewingConditions j c h DEFAULT -/
 
 def fromUcsInViewingConditions (jstar astar bstar : Float) (viewingConditions : ViewingConditions) : Cam16 :=
   let m := hypot astar bstar

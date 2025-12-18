@@ -266,8 +266,8 @@ public def solveToInt (hueDegrees chroma lstar : Float) : UInt32 :=
       let linrgb := bisectToLimit y hueRadians
       argbFromLinrgb linrgb
 
-public def solveToCam (hueDegress chroma lstar : Float) : Cam16 :=
-  let argb := solveToInt hueDegress chroma lstar
-  Cam16.fromInt argb
+/- public def solveToCam (hueDegress chroma lstar : Float) : Cam16 := -/
+/-   let argb := solveToInt hueDegress chroma lstar -/
+/-   Cam16.fromInt argb -/
 
 end HctSolver
