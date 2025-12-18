@@ -3,6 +3,7 @@ public import Material.Hct.Cam16
 public import Material.Hct.Hct
 public import Material.Utils.ColorUtils
 public import Material.Utils.MathUtils
+public import Material.Blend.Cam16jab
 
 public section
 
@@ -19,12 +20,12 @@ def harmonize (designColor sourceColor : UInt32) : UInt32 :=
   (Hct.fromHct outputHue fromHct.chroma fromHct.tone).toInt
 
 def cam16Ucs (fromArgb toArgb : UInt32) (amount : Float) : UInt32 :=
-  let fromCam := Cam16.fromInt fromArgb
-  let toCam := Cam16.fromInt toArgb
+  let fromCam := Cam16jab.fromInt fromArgb
+  let toCam := Cam16jab.fromInt toArgb
   let jstar := lerp fromCam.jstar toCam.jstar amount
   let astar := lerp fromCam.astar toCam.astar amount
   let bstar := lerp fromCam.bstar toCam.bstar amount
-  (Cam16.fromUcs jstar astar bstar).toInt
+  (Cam16jab.fromUcs jstar astar bstar).toInt
 
 def hctHue (fromArgb toArgb : UInt32) (amount : Float) : UInt32 :=
   let ucs := cam16Ucs fromArgb toArgb amount

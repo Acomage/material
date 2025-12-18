@@ -24,36 +24,15 @@ def setInteralState (argb : UInt32) : Hct :=
   let tone := ColorUtils.lstarFromArgb argb
   ⟨cam.hue, cam.chroma, tone, argb⟩
 
-/- def setHue (hct : Hct) (newHue : Float) : Hct := -/
-/-   setInteralState (solveToInt newHue hct.chroma hct.tone) -/
-
-/- def setChroma (hct : Hct) (newChroma : Float) : Hct := -/
-/-   setInteralState (solveToInt hct.hue newChroma hct.tone) -/
-
-/- def setTone (hct : Hct) (newTone : Float) : Hct := -/
-/-   setInteralState (solveToInt hct.hue hct.chroma newTone) -/
-
 public def fromHct (hue chroma tone : Float) : Hct :=
   let argb := solveToInt hue chroma tone
-  setInteralState argb
-
-/- def inViewingConditions (hct : Hct) (vc : ViewingConditions) : Hct := -/
-/-   let cam := Cam16.fromInt hct.toInt -/
-/-   let viewedInVc := cam.xyzInViewingConditions vc -/
-/-   let recastInVc := Cam16.fromXyzInViewingConditions viewedInVc[0] viewedInVc[1] viewedInVc[2] ViewingConditions.DEFAULT -/
-/-   fromHct recastInVc.hue recastInVc.chroma hct.tone -/
+  ⟨hue, chroma, tone, argb⟩
 
 public def fromInt (argb : UInt32) : Hct :=
   setInteralState argb
 
-/- public def isBlue (hue : Float) : Bool := -/
-/-   (hue >= 250.0) && (hue <= 270.0) -/
-
 public def isYellow (hue : Float) : Bool :=
   (hue >= 105.0) && (hue <= 125.0)
-
-/- public def isCyan (hue : Float) : Bool := -/
-/-   (hue >= 170.0) && (hue <= 207.0) -/
 
 instance : ToString Hct where
   toString hct :=
