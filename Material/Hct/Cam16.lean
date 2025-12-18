@@ -3,6 +3,7 @@ public import Material.Utils.ColorUtils
 public import Material.Utils.MathUtils
 public import Material.Hct.ViewingConditions
 
+open MathUtils ColorUtils ViewingConditions
 
 public structure Cam16 where
   hue : Float
@@ -15,9 +16,13 @@ public structure Cam16 where
   astar : Float
   bstar : Float
 
+public structure Cam16jab where
+  jstar : Float
+  astar : Float
+  bstar : Float
+
 namespace Cam16
 
-open MathUtils ColorUtils ViewingConditions
 
 /- def distance (cam1 cam2 : Cam16) : Float := -/
 /-   let dJ := cam1.jstar - cam2.jstar -/
@@ -39,7 +44,7 @@ def CAM16RGB_TO_XYZ := #v[
   #v[-0.0158415, -0.03412294, 1.0499644  ]
 ]
 
-public def xyzInViewingConditions (cam : Cam16) (viewingConditions : ViewingConditions) : Vec3 :=
+def xyzInViewingConditions (cam : Cam16) (viewingConditions : ViewingConditions) : Vec3 :=
   let alpha := if cam.j == 0.0
     then 0.0
     else cam.chroma / (cam.j / 100.0).sqrt
@@ -74,7 +79,7 @@ def viewed (cam : Cam16) (viewingConditions : ViewingConditions) : UInt32 :=
 public def toInt (cam : Cam16) : UInt32 :=
   cam.viewed DEFAULT
 
-public def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingConditions) : Cam16 :=
+def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingConditions) : Cam16 :=
   let rgbT := #v[x, y, z] * XYZ_TO_CAM16RGB
   let rgbD := viewingConditions.rgbD * rgbT
   let rgbAf := rgbD.map (fun cD => (viewingConditions.fl * cD.abs / 100.0) ^ 0.42)
@@ -139,3 +144,42 @@ public def fromUcs(jstar astar bstar : Float) : Cam16 :=
   fromUcsInViewingConditions jstar astar bstar DEFAULT
 
 end Cam16
+
+namespace Cam16jab
+
+def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingConditions) : Cam16jab :=
+  let rgbT := #v[x, y, z] * Cam16.XYZ_TO_CAM16RGB
+  let rgbD := viewingConditions.rgbD * rgbT
+  let rgbAf := rgbD.map (fun cD => (viewingConditions.fl * cD.abs / 100.0) ^ 0.42)
+  let rgbA := rgbAf.map (fun cAF =>
+    signum cAF * 400.0 * cAF / (cAF + 27.13)
+  )
+  let a := (#v[11.0, -12.0, 1.0] * rgbA).sum / 11.0
+  let b := (#v[1.0, 1.0, -2.0] * rgbA).sum / 9.0
+  let u := (#v[20.0, 20.0, 21.0] * rgbA).sum / 20.0
+  let p2 := (#v[40.0, 20.0, 1.0] * rgbA).sum / 20.0
+  let hue := sanitizeDegreesDouble (toDegrees (b.atan2 a))
+  let hueRadians := toRadians hue
+  let ac := p2 * viewingConditions.nbb
+  let j := 100.0 * (ac / viewingConditions.aw) ^ (viewingConditions.c * viewingConditions.z)
+  let huePrime := if hue < 20.14 then hue + 360.0 else hue
+  let eHue := 0.25 * ((toRadians huePrime + 2.0).cos + 3.8)
+  let p1 := 50000.0 / 13.0 * eHue * viewingConditions.nc * viewingConditions.ncb
+  let t := p1 * (hypot a b) / (u + 0.305)
+  let alpha := (1.64 - 0.29 ^ viewingConditions.n) ^ 0.73 * t ^ 0.9
+  let c := alpha * (j / 100.0).sqrt
+  let m := c * viewingConditions.flRoot
+  let jstar := (1.0 + 100.0 * 0.007) * j / (1.0 + 0.007 * j)
+  let mstar := 1.0 / 0.0228 * (1 + 0.0228 * m).log
+  let astar := mstar * hueRadians.cos
+  let bstar := mstar * hueRadians.sin
+  ⟨jstar, astar, bstar⟩
+
+def fromIntInViewingConditions (argb : UInt32) (viewingConditions : ViewingConditions) : Cam16jab :=
+  let xyz := xyzFromArgb argb
+  fromXyzInViewingConditions xyz[0] xyz[1] xyz[2] viewingConditions
+
+public def fromInt (argb : UInt32) : Cam16jab :=
+  fromIntInViewingConditions argb DEFAULT
+
+end Cam16jab

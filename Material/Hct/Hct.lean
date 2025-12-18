@@ -35,7 +35,8 @@ def setInteralState (argb : UInt32) : Hct :=
 
 public def fromHct (hue chroma tone : Float) : Hct :=
   let argb := solveToInt hue chroma tone
-  setInteralState argb
+  /- setInteralState argb -/
+  ⟨hue, chroma, tone, argb⟩
 
 /- def inViewingConditions (hct : Hct) (vc : ViewingConditions) : Hct := -/
 /-   let cam := Cam16.fromInt hct.toInt -/

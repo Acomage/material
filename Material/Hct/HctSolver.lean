@@ -2,7 +2,7 @@ module
 public import Material.Utils.ColorUtils
 public import Material.Utils.MathUtils
 public import Material.Hct.ViewingConditions
-public import Material.Hct.Cam16
+-- public import Material.Hct.Cam16
 
 
 open MathUtils ColorUtils ViewingConditions
