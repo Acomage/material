@@ -21,9 +21,9 @@ def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingCondi
   let rgbT := #v[x, y, z] * XYZ_TO_CAM16RGB
   let rgbD := viewingConditions.rgbD * rgbT
   let rgbAf := rgbD.map (fun cD => (viewingConditions.fl * cD.abs / 100.0) ^ 0.42)
-  let rgbA := rgbAf.map (fun cAF =>
-    signum cAF * 400.0 * cAF / (cAF + 27.13)
-  )
+  let rgbA := rgbAf.zipWith (fun cAF cD =>
+  signum cD * 400.0 * cAF / (cAF + 27.13)
+  ) rgbD
   let a := (#v[11.0, -12.0, 1.0] * rgbA).sum / 11.0
   let b := (#v[1.0, 1.0, -2.0] * rgbA).sum / 9.0
   let u := (#v[20.0, 20.0, 21.0] * rgbA).sum / 20.0
