@@ -5,12 +5,12 @@ public import Material.Hct.ViewingConditions
 
 open MathUtils ColorUtils ViewingConditions
 
-public structure Cam16jab where
+public structure Cam16ucs where
   jstar : Float
   astar : Float
   bstar : Float
 
-namespace Cam16jab
+namespace Cam16ucs
 
 def CAM16RGB_TO_XYZ := #v[
   #v[1.8620678,  -1.0112547,  0.14918678 ],
@@ -24,13 +24,13 @@ def XYZ_TO_CAM16RGB := #v[
   #v[-0.002079, 0.048952, 0.953127 ]
 ]
 
-def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingConditions) : Cam16jab :=
+def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingConditions) : Cam16ucs :=
   let rgbT := #v[x, y, z] * XYZ_TO_CAM16RGB
   let rgbD := viewingConditions.rgbD * rgbT
   let rgbAf := rgbD.map (fun cD => (viewingConditions.fl * cD.abs / 100.0) ^ 0.42)
-  let rgbA := rgbAf.map (fun cAF =>
-    signum cAF * 400.0 * cAF / (cAF + 27.13)
-  )
+  let rgbA := rgbAf.zipWith (fun cAF cD =>
+  signum cD * 400.0 * cAF / (cAF + 27.13)
+  ) rgbD
   let a := (#v[11.0, -12.0, 1.0] * rgbA).sum / 11.0
   let b := (#v[1.0, 1.0, -2.0] * rgbA).sum / 9.0
   let u := (#v[20.0, 20.0, 21.0] * rgbA).sum / 20.0
@@ -52,17 +52,17 @@ def fromXyzInViewingConditions (x y z : Float) (viewingConditions : ViewingCondi
   let bstar := mstar * hueRadians.sin
   ⟨jstar, astar, bstar⟩
 
-def fromIntInViewingConditions (argb : UInt32) (viewingConditions : ViewingConditions) : Cam16jab :=
+def fromIntInViewingConditions (argb : UInt32) (viewingConditions : ViewingConditions) : Cam16ucs :=
   let xyz := xyzFromArgb argb
   fromXyzInViewingConditions xyz[0] xyz[1] xyz[2] viewingConditions
 
-public def fromInt (argb : UInt32) : Cam16jab :=
+public def fromInt (argb : UInt32) : Cam16ucs :=
   fromIntInViewingConditions argb DEFAULT
 
-public def fromUcs(jstar astar bstar : Float) : Cam16jab :=
+public def fromUcs(jstar astar bstar : Float) : Cam16ucs :=
   ⟨jstar, astar, bstar⟩
 
-public def toInt (cam : Cam16jab) : UInt32 :=
+public def toInt (cam : Cam16ucs) : UInt32 :=
   let jstar := cam.jstar
   let astar := cam.astar
   let bstar := cam.bstar
@@ -101,4 +101,4 @@ public def toInt (cam : Cam16jab) : UInt32 :=
   let xyz := rgbF * CAM16RGB_TO_XYZ
   argbFromXyz xyz[0] xyz[1] xyz[2]
 
-end Cam16jab
+end Cam16ucs
