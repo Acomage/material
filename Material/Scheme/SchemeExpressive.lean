@@ -4,8 +4,6 @@ public import Material.Palettes.TonalPalette
 public import Material.Scheme.DynamicScheme
 public import Material.DynamicColor.DynamicScheme
 
-public section
-
 def hues : Vector Float 9 := #v[0, 21, 51, 121, 151, 191, 271, 321, 360]
 def secondaryRotations : Vector Float 9 := #v[45, 95, 45, 20, 45, 90, 45, 45, 45]
 def tertiaryRotations : Vector Float 9 := #v[120, 120, 20, 45, 20, 15, 20, 120, 120]
@@ -13,7 +11,7 @@ def tertiaryRotations : Vector Float 9 := #v[120, 120, 20, 45, 20, 15, 20, 120, 
 
 open TonalPalette DynamicScheme
 
-def schemeExpressive (color : Hct) (isDark : Bool) (contrastLevel : Float := 0.0) : DynamicScheme :=
+public def schemeExpressive (color : Hct) (isDark : Bool) (contrastLevel : Float := 0.0) : DynamicScheme :=
   {
     sourceColorHct := color,
     variant := Variant.expressive,

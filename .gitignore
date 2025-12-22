@@ -4,7 +4,7 @@
 compile_commands.json
 plan.txt
 /.cache
-stb_image.h
+wuffs-v*.c
 build
 lib
 res*.txt

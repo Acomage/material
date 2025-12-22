@@ -3,11 +3,10 @@ public import Material.Hct.Hct
 public import Material.Palettes.TonalPalette
 public import Material.Scheme.DynamicScheme
 
-public section
 
 open TonalPalette
 
-def schemeMomoChroma (color : Hct) (isDark : Bool) (contrastLevel : Float := 0.0) : DynamicScheme :=
+public def schemeMonoChrome (color : Hct) (isDark : Bool) (contrastLevel : Float := 0.0) : DynamicScheme :=
   {
     sourceColorHct := color,
     variant := Variant.monoChrome,
