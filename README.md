@@ -5,10 +5,6 @@ This repository contains the google material color utilities rewritten in Lean4.
 The qauntizer and score algorithms are implemented by Futhark.
 Other algorithms are implemented by Lean4.
 
-The result of this project is **NOT THE SAME** as the original google
-material color utilities now since I may port some algorithms incorrectly.
-It will be fixed in the future.
-
 I'm have just ported the original code to Lean4 and Futhark thesedays.
 Since the original code is written in OOP style, the code here may not be very "leany".
 I will try to refactor the code to be more idiomatic Lean4 in the future.

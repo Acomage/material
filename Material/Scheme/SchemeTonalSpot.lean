@@ -4,11 +4,10 @@ public import Material.Palettes.TonalPalette
 public import Material.Utils.MathUtils
 public import Material.Scheme.DynamicScheme
 
-public section
 
 open TonalPalette MathUtils
 
-def schemeTonalSpot (color : Hct) (isDark : Bool) (contrastLevel : Float := 0.0) : DynamicScheme :=
+public def schemeTonalSpot (color : Hct) (isDark : Bool) (contrastLevel : Float := 0.0) : DynamicScheme :=
   {
     sourceColorHct := color,
     variant := Variant.tonalSpot,

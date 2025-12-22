@@ -5,11 +5,9 @@ public import Material.Temperature.TemperatureCache
 public import Material.Dislike.DislikeAnalyzer
 public import Material.Scheme.DynamicScheme
 
-public section
-
 open TonalPalette DislikeAnalyzer Temperature
 
-def schemeContent (color : Hct) (isDark : Bool) (contrastLevel : Float := 0.0) : DynamicScheme :=
+public def schemeContent (color : Hct) (isDark : Bool) (contrastLevel : Float := 0.0) : DynamicScheme :=
   {
     sourceColorHct := color,
     variant := Variant.content,
