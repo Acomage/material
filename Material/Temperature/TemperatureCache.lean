@@ -6,7 +6,7 @@ public import Material.Utils.MathUtils
 open MathUtils
 
 structure AppendPlan where
-  color : Hct
+  colorHue : Nat
   count : Nat
 deriving Inhabited
 
@@ -74,11 +74,6 @@ def isBetween (angle a b : Int) : Bool :=
   else
     a <= angle || angle <= b
 
-def getRelativeTemperature (inputTemp coldestTemp warmestTemp : Float) : Float :=
-  let range := warmestTemp - coldestTemp
-  if range == 0.0 then 0.5 else
-    (inputTemp - coldestTemp) / range
-
 def getFindIndex(startHue endHue : Int) : Array Nat :=
   Array.range 360 |>.filter fun i =>
     isBetween i startHue endHue
@@ -104,7 +99,7 @@ public def getComplement(input : Hct) : Hct :=
 
 def calculateTotalTempDelta (startHue : Nat) (hueRing : HueRing) : Float :=
   let hues := (Array.range' startHue 360).map fun i => sanitizeDegreesInt i.toUInt32
-  let temps := hues.map fun h => getRelativeTemperature hueRing.temps[h.toNat]! hueRing.coldestTemp hueRing.warmestTemp
+  let temps := hues.map fun h => (hueRing.temps[h.toNat]! - hueRing.coldestTemp) * hueRing.invRange
   let tempDeltas := Array.range 359 |>.map fun i => (temps[i + 1]! - temps[i]!).abs
   tempDeltas.sum
 
@@ -112,8 +107,8 @@ def trimPlansTo
   (limit : Nat)
   (plans : Array AppendPlan) : Array AppendPlan :=
   let rec go (i accCount : Nat) (acc : Array AppendPlan) :=
-    if i < plans.size then
-      let p := plans[i]!
+    if h : i < plans.size then
+      let p := plans[i]
       let next := accCount + p.count
       if next < limit then
         go (i + 1) next (acc.push p)
@@ -138,51 +133,44 @@ def sampleCount
 def stepPlan
   (tempStep : Float)
   (hueRing : HueRing)
-  (hct : Hct)
+  (hue : Nat)
   (s : PlanState) : PlanState :=
-  let temp := getRelativeTemperature hueRing.temps[hct.hue.toUInt32.toNat]! hueRing.coldestTemp hueRing.warmestTemp
+  let temp := (hueRing.temps[hue]! - hueRing.coldestTemp) * hueRing.invRange
   let delta := (temp - s.lastTemp).abs
   let total := s.totalTempDelta + delta
   let n := sampleCount total tempStep s.size
   let plans :=
     if n == 0 then s.plans
-    else s.plans.push { color := hct, count := n }
+    else s.plans.push { colorHue := hue, count := n }
   { lastTemp := temp
     totalTempDelta := total
     plans := plans }
 
-def materialize (plans : Array AppendPlan) : Array Hct :=
+def materialize (plans : Array AppendPlan) (hcts : Array Hct) : Array Hct :=
   plans.foldl
-    (fun acc p => acc ++ Array.replicate p.count p.color)
+    (fun acc p => acc ++ Array.replicate p.count hcts[p.colorHue]!)
     #[]
 
-public def getAnalogousColors
-  (input : Hct)
-  (count : Int32 := 5)
-  (divisions : Int32 := 12) : Array Hct :=
+public def getAnalogousColors (input : Hct) (count : Int32 := 5) (divisions : Int32 := 12) : Array Hct :=
   let hueRing := HueRing.make input
   let hctByHue := hueRing.hcts
   let coldestTemp := hueRing.temps[hueRing.coldestHue.toNat]!
-  let warmestTemp := hueRing.temps[hueRing.warmestHue.toNat]!
   let startHue := input.hue.toInt64.toNatClampNeg
-  let totalDelta :=
-    calculateTotalTempDelta startHue hueRing
+  let totalDelta := calculateTotalTempDelta startHue hueRing
   let tempStep := totalDelta / divisions.toFloat
-  let hues :=
-    (Array.range 360).map fun i =>
-      sanitizeDegreesInt (startHue + i).toUInt32
+  let hues := (Array.range 360).map fun i => sanitizeDegreesInt (startHue + i).toUInt32
   let initialState : PlanState :=
-    { lastTemp := getRelativeTemperature hueRing.temps[startHue]! coldestTemp warmestTemp
+    { lastTemp := (hueRing.temps[startHue]! - coldestTemp) * hueRing.invRange
       totalTempDelta := 0.0
       plans := #[] }
   let plans :=
     hues.foldl
       (fun s h =>
-        stepPlan tempStep hueRing hctByHue[h.toNat]! s)
+        stepPlan tempStep hueRing h.toNat s)
       initialState
     |>.plans
     |> trimPlansTo divisions.toNatClampNeg
-  let allColors := materialize plans
+  let allColors := materialize plans hctByHue
   let ccwCount := (count - 1) / 2
   let indices :=
     (Array.range count.toNatClampNeg).map fun i =>
