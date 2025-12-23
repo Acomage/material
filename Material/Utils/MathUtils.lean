@@ -53,6 +53,14 @@ def rotationDirection (current target : Float) : Float :=
 def differenceDegrees (a b : Float) : Float :=
   180.0 - ((a - b).abs - 180.0).abs
 
+def argMin (xs : Array Float) : Nat :=
+  Array.range xs.size |>.foldl (fun acc i =>
+    if xs[i]! < xs[acc]! then i else acc) 0
+
+def argMax (xs : Array Float) : Nat :=
+  Array.range xs.size |>.foldl (fun acc i =>
+    if xs[i]! > xs[acc]! then i else acc) 0
+
 instance : Mul Vec3 where
   mul v1 v2 := v1.zipWith (·*·) v2
 
