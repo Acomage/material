@@ -49,6 +49,8 @@ target extract.o pkg : FilePath := do
     proc {
       cmd := "clang"
       args := #["-c", "-O3", "-march=native", "-ffast-math", "-fPIC",
+                "-mtune=native", "-fstrict-aliasing", "-funroll-loops",
+                "-fomit-frame-pointer", "-DNDEBUG",
                 "-Wnan-infinity-disabled",
                 "-I", srcDir.toString,
                 srcFile.toString, "-o", oFile.toString]
@@ -67,7 +69,10 @@ target ffi.o pkg :  FilePath := do
     let leanInclude ← getLeanIncludeDir
     proc {
       cmd := "clang"
-      args := #["-c", "-O3", "-ffast-math", "-fPIC",
+      args := #["-c", "-O3", "-march=native", "-ffast-math", "-fPIC",
+                "-mtune=native", "-fstrict-aliasing", "-funroll-loops",
+                "-fomit-frame-pointer", "-DNDEBUG",
+                "-Wnan-infinity-disabled",
                 "-I", leanInclude.toString,
                 "-I", srcDir.toString,
                 "-I", buildDir.toString,

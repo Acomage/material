@@ -32,18 +32,10 @@ def tone (tonalPalette : TonalPalette) (tone : UInt32) : UInt32 :=
     averageArgb (tonalPalette.tone 98) (tonalPalette.tone 100)
   else
     (Hct.fromHct tonalPalette.hue tonalPalette.chroma tone.toFloat).toInt
-/- termination_by (if tone == 99 then 1 else 0) -/
-
-/- public def getHct (tonalPalette : TonalPalette) (tone : Float) : Hct := -/
-/-   Hct.fromHct tonalPalette.hue tonalPalette.chroma tone -/
 
 public def getArgb (tonalPalette : TonalPalette) (tone : Float) : UInt32 :=
   HctSolver.solveToInt tonalPalette.hue tonalPalette.chroma tone
 
-/--
-  the KeyColor structure in google's implementation also have a cache,
-  we will omit it for the same reason as above.
--/
 structure KeyColor where
   hue : Float
   requestedChroma : Float
@@ -65,17 +57,16 @@ def create (keyColor : KeyColor) : Hct := runST fun s => do
     let lowerTone ← lowerToneRef.get
     let upperTone ← upperToneRef.get
     let midTone := (lowerTone + upperTone) / 2
-    let isAscending := maxChroma keyColor midTone < maxChroma keyColor (midTone + toneStepSize)
     let sufficientChroma := maxChroma keyColor midTone >= keyColor.requestedChroma - epsilon
     if sufficientChroma then
       if (lowerTone - pivotTone).abs < (upperTone - pivotTone).abs then
         upperToneRef.set midTone
+      else if lowerTone == midTone then
+        return Hct.fromHct keyColor.hue keyColor.requestedChroma lowerTone.toFloat
       else
-        if lowerTone == midTone then
-          return Hct.fromHct keyColor.hue keyColor.requestedChroma lowerTone.toFloat
-        else
-          lowerToneRef.set midTone
+        lowerToneRef.set midTone
     else
+      let isAscending := maxChroma keyColor midTone < maxChroma keyColor (midTone + toneStepSize)
       if isAscending then
         lowerToneRef.set (midTone + toneStepSize)
       else
@@ -86,9 +77,6 @@ end KeyColor
 
 public def fromHct (hct : Hct) : TonalPalette :=
   ⟨hct.hue, hct.chroma, hct⟩
-
-/- public def fromInt (argb : UInt32) : TonalPalette := -/
-/-   fromHct (Hct.fromInt argb) -/
 
 public def fromHueAndChroma (hue chroma : Float) : TonalPalette :=
   let keyColor := KeyColor.create ⟨hue, chroma⟩
