@@ -68,7 +68,7 @@ Complete color palettes for each scheme with light and dark variants:
 | Vibrant | ![Vibrant Scheme](example/visualization/scheme_vibrant.png) |
 
 ### Interactive Preview
-An HTML preview page with all visualizations is available at [`index.html`](index.html).
+An HTML preview page with all visualizations is available at [`https://acomage.github.io/material/`](index.html).
 
 ### Generating Visualizations
 To generate similar visualizations for your own images:
