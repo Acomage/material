@@ -1,0 +1,21 @@
+#+title:     TodoLists
+#+author:    Acomage
+#+email:     acomage468@gmail.com
+* TODO Refactor lean code [1/8]
+- [ ] Blend
+- [ ] Contrast
+- [X] DynamicColor
+- [ ] Hct
+- [ ] Palettes
+- [ ] Scheme
+- [ ] Temperature
+- [ ] Utils
+
+* TODO Refactor futhark code [0/4]
+- [ ] wu.fut
+- [ ] wsmeans.fut
+- [ ] score.fut
+
+* TODO Rewrite in zig
+
+* TODO Use a faster image decoder
