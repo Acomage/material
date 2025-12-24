@@ -31,7 +31,7 @@ def showAllColors (s : DynamicScheme) : String :=
   let colors := allMaterialDynamicColors
   let colorStrs := colors.map (fun dc =>
     let argb := getArgb dc s
-    s!"{dc.name}: Tone {StringUtils.hexFromArgb argb}"
+    s!"{dc.name}: Color {StringUtils.hexFromArgb argb}"
   )
   String.intercalate "\n" colorStrs
 

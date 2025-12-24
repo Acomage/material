@@ -1,0 +1,283 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Material You Design System | Lean4</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #1a1c1e;
+            --text-sub: #44474e;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Google Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a1c1e 0%, #2f3033 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 { font-size: 3rem; margin: 0; font-weight: 700; letter-spacing: -1px; }
+        .tagline { font-size: 1.25rem; opacity: 0.8; margin-top: 1rem; font-family: 'Roboto Mono', monospace; }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin: 4rem 0 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .section-title::after {
+            content: "";
+            height: 2px;
+            flex-grow: 1;
+            background: linear-gradient(to right, #ccc, transparent);
+        }
+
+        /* Top Overview Cards */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .glass-card:hover { transform: translateY(-5px); }
+        .glass-card img { width: 100%; border-radius: 12px; }
+
+        /* Individual Scheme Section */
+        .scheme-showcase {
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+            margin-bottom: 5rem;
+        }
+
+        .scheme-block {
+            background: var(--card-bg);
+            border-radius: 32px;
+            padding: 3rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .scheme-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+        }
+
+        .scheme-info h3 {
+            font-size: 2.2rem;
+            margin: 0;
+            color: var(--primary);
+        }
+
+        .desktop-preview {
+            position: relative;
+            cursor: zoom-in;
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .desktop-preview:hover {
+            transform: scale(1.02);
+        }
+
+        .desktop-preview img {
+            width: 100%;
+            height: auto;
+            border-radius: 16px;
+            display: block;
+        }
+
+        .color-strip {
+            display: flex;
+            height: 40px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 2rem;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+
+        .color-dot {
+            flex: 1;
+            height: 100%;
+            position: relative;
+        }
+
+        footer {
+            padding: 5rem 2rem;
+            text-align: center;
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 1000px) {
+            .overview-grid { grid-template-columns: 1fr; }
+            .scheme-block { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Material You</h1>
+        <div class="tagline">Color System Visualization | Lean4 Implementation</div>
+    </header>
+
+    <div class="container">
+        <div class="section-title">Source Insight</div>
+        <div class="overview-grid">
+            <div class="glass-card">
+                <p><strong>Extracted Palette</strong></p>
+                <img src="extracted_colors.png" alt="Extracted colors">
+            </div>
+            <div class="glass-card">
+                <p><strong>Global Comparison</strong></p>
+                <img src="scheme_comparison.png" alt="Comparison">
+            </div>
+        </div>
+
+        <div class="section-title">Scheme Impressions</div>
+        <div class="scheme-showcase">
+
+            <div class="scheme-block">
+                <div class="scheme-header">
+                    <div class="scheme-info">
+                        <h3>Content</h3>
+                        <p style="color: var(--text-sub)">Desktop environment simulation for Light and Dark modes</p>
+                    </div>
+                </div>
+                <div class="desktop-preview">
+                    <img src="desktop_concept_content.png" alt="Content concept">
+                </div>
+            </div>
+
+            <div class="scheme-block">
+                <div class="scheme-header">
+                    <div class="scheme-info">
+                        <h3>Expressive</h3>
+                        <p style="color: var(--text-sub)">Desktop environment simulation for Light and Dark modes</p>
+                    </div>
+                </div>
+                <div class="desktop-preview">
+                    <img src="desktop_concept_expressive.png" alt="Expressive concept">
+                </div>
+            </div>
+
+            <div class="scheme-block">
+                <div class="scheme-header">
+                    <div class="scheme-info">
+                        <h3>Fidelity</h3>
+                        <p style="color: var(--text-sub)">Desktop environment simulation for Light and Dark modes</p>
+                    </div>
+                </div>
+                <div class="desktop-preview">
+                    <img src="desktop_concept_fidelity.png" alt="Fidelity concept">
+                </div>
+            </div>
+
+            <div class="scheme-block">
+                <div class="scheme-header">
+                    <div class="scheme-info">
+                        <h3>MonoChrome</h3>
+                        <p style="color: var(--text-sub)">Desktop environment simulation for Light and Dark modes</p>
+                    </div>
+                </div>
+                <div class="desktop-preview">
+                    <img src="desktop_concept_monochrome.png" alt="MonoChrome concept">
+                </div>
+            </div>
+
+            <div class="scheme-block">
+                <div class="scheme-header">
+                    <div class="scheme-info">
+                        <h3>Neutral</h3>
+                        <p style="color: var(--text-sub)">Desktop environment simulation for Light and Dark modes</p>
+                    </div>
+                </div>
+                <div class="desktop-preview">
+                    <img src="desktop_concept_neutral.png" alt="Neutral concept">
+                </div>
+            </div>
+
+            <div class="scheme-block">
+                <div class="scheme-header">
+                    <div class="scheme-info">
+                        <h3>Rainbow</h3>
+                        <p style="color: var(--text-sub)">Desktop environment simulation for Light and Dark modes</p>
+                    </div>
+                </div>
+                <div class="desktop-preview">
+                    <img src="desktop_concept_rainbow.png" alt="Rainbow concept">
+                </div>
+            </div>
+
+            <div class="scheme-block">
+                <div class="scheme-header">
+                    <div class="scheme-info">
+                        <h3>TonalSpot</h3>
+                        <p style="color: var(--text-sub)">Desktop environment simulation for Light and Dark modes</p>
+                    </div>
+                </div>
+                <div class="desktop-preview">
+                    <img src="desktop_concept_tonalspot.png" alt="TonalSpot concept">
+                </div>
+            </div>
+
+            <div class="scheme-block">
+                <div class="scheme-header">
+                    <div class="scheme-info">
+                        <h3>Vibrant</h3>
+                        <p style="color: var(--text-sub)">Desktop environment simulation for Light and Dark modes</p>
+                    </div>
+                </div>
+                <div class="desktop-preview">
+                    <img src="desktop_concept_vibrant.png" alt="Vibrant concept">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Generated by Material You Lean4 Core</p>
+        <p>Dynamic Color Algorithms Visualization</p>
+    </footer>
+</body>
+</html>

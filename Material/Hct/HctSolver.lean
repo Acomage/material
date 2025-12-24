@@ -2,7 +2,6 @@ module
 public import Material.Utils.ColorUtils
 public import Material.Utils.MathUtils
 public import Material.Hct.ViewingConditions
--- public import Material.Hct.Cam16
 
 
 open MathUtils ColorUtils ViewingConditions
@@ -73,6 +72,10 @@ def isBounded (x : Float) : Bool :=
     so that (y - 100kR)/kG is always less than 100
     summarizing the above analysis, when y is in [0, 100],
     one of n = 0, 5, 11 will give a valid vertex.
+    
+    Another important property is that the returned Vec3 is always in [0, 100],
+    because the coordA and coordB is always either 0 or 100,
+    and the calculated coordinate is always bounded checked by isBounded.
 -/
 def nthVertex (y : Float) (n : Fin 12) : Option Vec3 :=
   let kR := Y_FROM_LINRGB[0]
@@ -105,14 +108,12 @@ def nthVertex (y : Float) (n : Fin 12) : Option Vec3 :=
     else
       none
 
--- we need the refined type for then range of colorspace so that we can prove something about that
--- TODO: add refined type for colorspace
-
--- TODO: prove the safety of get!
 /--
   notice that when y is in [0, 100], at least one vertex is valid.
   that means in the loop, left and right will always be assigned to a non-none value.
   So the final get! is safe.
+  the value returned in the 2 Vec3 is always in [0, 100],
+  because they are from nthVertex, which always returns a Vec3 in [0, 100] if it's not none.
 -/
 def bisectToSegment (y targetHue : Float) : Vector Vec3 2 := runST fun s => do
     let leftRef : (ST.Ref s (Option Vec3)) ← ST.mkRef none
@@ -190,11 +191,13 @@ def bisectToLimit (y targetHue : Float) : Vec3 := runST fun s => do
             break
           else
             let mPlane := (lPlane + rPlane) / 2
-            -- maybe we can prove that mPlane is always in [0, 255], but not now
-            -- so we just clamp it
-            -- TODO: review this later
-            let mPlane' := clampToFin255 mPlane
-            let midPlaneCoordinate := CRITICAL_PLANES[mPlane']
+            -- mPlane is always in [0, 255]
+            -- because lPlane and rPlane are always in [0, 255]
+            -- that's because when trueDelinearized's input is in [0, 100], its output is in [0, 255]
+            -- since left[axis] and right[axis] are from bisectToLimit, it's value is always in [0, 100]
+            /- let mPlane' := clampToFin255 mPlane -/
+            /- let midPlaneCoordinate := CRITICAL_PLANES[mPlane'] -/
+            let midPlaneCoordinate := CRITICAL_PLANES[mPlane.toNatClampNeg]!
             let mid := setCoordinate left midPlaneCoordinate right axis
             let midHue := hueOf mid
             if areInCycleOrder (←leftHueRef.get) targetHue midHue then
@@ -266,9 +269,5 @@ public def solveToInt (hueDegrees chroma lstar : Float) : UInt32 :=
     else
       let linrgb := bisectToLimit y hueRadians
       argbFromLinrgb linrgb
-
-/- public def solveToCam (hueDegress chroma lstar : Float) : Cam16 := -/
-/-   let argb := solveToInt hueDegress chroma lstar -/
-/-   Cam16.fromInt argb -/
 
 end HctSolver

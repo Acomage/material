@@ -1,7 +1,6 @@
 module
 public import Material.Utils.ColorUtils
 
-
 open ColorUtils
 
 def CONTRAST_RATIO_EPSILON := 0.04
@@ -9,16 +8,6 @@ def CONTRAST_RATIO_EPSILON := 0.04
 def LUMINANCE_GAMUT_MAP_TOLERANCE := 0.4
 
 namespace Contrast
-
--- def RATIO_MIN := 1.0
-
--- def RATIO_MAX := 21.0
-
--- def RATIO_30 := 3.0
-
--- def RATIO_45 := 4.5
-
--- def RATIO_70 := 7.0
 
 def ratioOfYs (y1 y2 : Float) : Float :=
   let lighter := max y1 y2
