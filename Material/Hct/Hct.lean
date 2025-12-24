@@ -26,7 +26,12 @@ def setInteralState (argb : UInt32) : Hct :=
 
 public def fromHct (hue chroma tone : Float) : Hct :=
   let argb := solveToInt hue chroma tone
-  ⟨hue, chroma, tone, argb⟩
+  -- here we can not directly use ⟨hue, chroma, tone, argb⟩
+  -- because not all hue, chroma, tone can be
+  -- invalid combinations, so we need to
+  -- use the argb we got to recalculate
+  -- ⟨hue, chroma, tone, argb⟩
+  setInteralState argb
 
 public def fromInt (argb : UInt32) : Hct :=
   setInteralState argb
