@@ -16,7 +16,7 @@ public def schemeContent (color : Hct) (isDark : Bool) (contrastLevel : Float :=
     primaryPalette := fromHueAndChroma color.hue color.chroma,
     secondaryPalette := fromHueAndChroma
       color.hue (max (color.chroma - 32.0) (color.chroma / 2)) ,
-    tertiaryPalette := fromHct (fixIfDisliked (getAnalogousColors color 3 6)[2]!),
+    tertiaryPalette := fromHct (fixIfDisliked (getAnalogousColorsAt color 3 6 2)),
     neutralPalette := fromHueAndChroma
       color.hue (color.chroma / 8.0),
     neutralVariantPalette := fromHueAndChroma

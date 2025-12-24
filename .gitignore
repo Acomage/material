@@ -4,7 +4,6 @@
 compile_commands.json
 plan.txt
 /.cache
-wuffs-v*.c
 build
 lib
 res*.txt

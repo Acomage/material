@@ -174,9 +174,32 @@ public def getAnalogousColors (input : Hct) (count : Int32 := 5) (divisions : In
   let ccwCount := (count - 1) / 2
   let indices :=
     (Array.range count.toNatClampNeg).map fun i =>
-      (Int.ofNat i - ccwCount.toInt) % allColors.size
+      (Int.ofNat i - ccwCount.toInt) % divisions.toInt
   indices
     |>.map (fun i => allColors[i.toNat]!)
     |>.set! ccwCount.toNatClampNeg input
+
+public def getAnalogousColorsAt (input : Hct) (count : Int32 := 5) (divisions : Int32 := 12) (index : Int) : Hct :=
+  let hueRing := HueRing.make input
+  let hctByHue := hueRing.hcts
+  let coldestTemp := hueRing.temps[hueRing.coldestHue.toNat]!
+  let startHue := input.hue.toInt64.toNatClampNeg
+  let totalDelta := calculateTotalTempDelta startHue hueRing
+  let tempStep := totalDelta / divisions.toFloat
+  let hues := (Array.range 360).map fun i => sanitizeDegreesInt (startHue + i).toUInt32
+  let initialState : PlanState :=
+    { lastTemp := (hueRing.temps[startHue]! - coldestTemp) * hueRing.invRange
+      totalTempDelta := 0.0
+      plans := #[] }
+  let ccwCount := (count - 1) / 2
+  let i := ((index - ccwCount.toInt) % divisions.toInt).toNat
+  let plans :=
+    hues.foldl
+      (fun s h =>
+        stepPlan tempStep hueRing h.toNat s)
+      initialState
+    |>.plans
+    |> trimPlansTo (i + 1)
+  if index = ccwCount.toNatClampNeg then input else hctByHue[plans.back!.colorHue]!
 
 end Temperature
