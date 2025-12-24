@@ -41,34 +41,29 @@ using the default C toolchain of Lean4.
 
 This project can extract colors from images and generate complete Material You color schemes. Below are visualizations generated from an example wallpaper:
 
+### Example wallpaper
+![Example wallpaper](example/example.jpg)
+
 ### Extracted Colors
 The system extracts 4 dominant colors from the example image:
 ![Extracted Colors](example/visualization/extracted_colors.png)
 
-### All Color Schemes Overview
-Primary colors for light and dark variants of all generated schemes:
-![All Schemes Overview](example/visualization/all_schemes_overview.png)
-
-### Color Scheme Comparison
-Comparison of key colors across all schemes (light variants):
-![Scheme Comparison](example/visualization/scheme_comparison.png)
-
-### Individual Scheme Palettes
-Complete color palettes for each scheme with light and dark variants:
+### All Scheme Desktop Experience Simulation
+Adaptive Desktop Palette Simulation (Light vs Dark)
 
 | Scheme | Visualization |
 |--------|--------------|
-| Content | ![Content Scheme](example/visualization/scheme_content.png) |
-| Expressive | ![Expressive Scheme](example/visualization/scheme_expressive.png) |
-| Fidelity | ![Fidelity Scheme](example/visualization/scheme_fidelity.png) |
-| MonoChrome | ![MonoChrome Scheme](example/visualization/scheme_monochrome.png) |
-| Neutral | ![Neutral Scheme](example/visualization/scheme_neutral.png) |
-| Rainbow | ![Rainbow Scheme](example/visualization/scheme_rainbow.png) |
-| TonalSpot | ![TonalSpot Scheme](example/visualization/scheme_tonalspot.png) |
-| Vibrant | ![Vibrant Scheme](example/visualization/scheme_vibrant.png) |
+| Content | ![Content Scheme](example/visualization/desktop_concept_content.png) |
+| Expressive | ![Expressive Scheme](example/visualization/desktop_concept_expressive.png) |
+| Fidelity | ![Fidelity Scheme](example/visualization/desktop_concept_fidelity.png) |
+| MonoChrome | ![MonoChrome Scheme](example/visualization/desktop_concept_monochrome.png) |
+| Neutral | ![Neutral Scheme](example/visualization/desktop_concept_neutral.png) |
+| Rainbow | ![Rainbow Scheme](example/visualization/desktop_concept_rainbow.png) |
+| TonalSpot | ![TonalSpot Scheme](example/visualization/desktop_concept_tonalspot.png) |
+| Vibrant | ![Vibrant Scheme](example/visualization/desktop_concept_vibrant.png) |
 
 ### Interactive Preview
-An HTML preview page with all visualizations is available at [`https://acomage.github.io/material/`](index.html).
+An HTML preview page with all visualizations is available at [`https://acomage.github.io/material/`](https://acomage.github.io/material/).
 
 ### Generating Visualizations
 To generate similar visualizations for your own images:
