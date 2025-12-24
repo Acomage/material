@@ -61,7 +61,7 @@ LEAN_CC=clang lake build
 | Vibrant | ![Vibrant 方案](example/visualization/scheme_vibrant.png) |
 
 ### 交互式预览
-包含所有可视化结果的 HTML 预览页面可在 [`example/visualization/index.html`](example/visualization/index.html) 找到。
+包含所有可视化结果的 HTML 预览页面可在 [`index.html`](index.html) 找到。
 
 ### 生成可视化
 为你自己的图像生成类似的可视化结果：
