@@ -171,9 +171,9 @@ public def toneFnPair
   let mut n_tone := nearer s
   let mut f_tone := farther s
   if (f_tone - n_tone) * expansionDir < delta then
-    f_tone := clampDouble (n_tone + delta * expansionDir) 0 100
+    f_tone := clampDouble 0 100 (n_tone + delta * expansionDir)
     if (f_tone - n_tone) * expansionDir < delta then
-      n_tone := clampDouble (f_tone - delta * expansionDir) 0 100
+      n_tone := clampDouble 0 100 (f_tone - delta * expansionDir)
   if 50 <= n_tone && n_tone < 60 then
     if expansionDir > 0 then
       n_tone := 60
