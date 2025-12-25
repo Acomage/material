@@ -73,9 +73,3 @@ To generate similar visualizations for your own images:
    cd example
    python generate_visualization.py
    ```
-   The script requires Python with `matplotlib` and `numpy`. You can use `uv` to manage dependencies:
-   ```bash
-   uv venv .venv
-   source .venv/bin/activate
-   uv pip install matplotlib numpy
-   ```

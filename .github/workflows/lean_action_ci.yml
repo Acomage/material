@@ -1,9 +1,13 @@
 name: Lean + Futhark + ISPC CI
 
 on:
-  push:
   pull_request:
-  workflow_dispatch:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   build:

@@ -34,34 +34,29 @@ LEAN_CC=clang lake build
 
 本项目可以从图像中提取颜色并生成完整的 Material You 颜色方案。以下是从示例壁纸生成的可视化结果：
 
+## 示例壁纸
+![示例壁纸](example/example.jpg)
+
 ### 提取的颜色
 系统从示例图像中提取了 4 种主要颜色：
 ![提取的颜色](example/visualization/extracted_colors.png)
 
-### 所有颜色方案概览
-所有生成方案的浅色和深色变体的主要颜色：
-![所有方案概览](example/visualization/all_schemes_overview.png)
-
-### 颜色方案对比
-所有方案关键颜色对比（浅色变体）：
-![方案对比](example/visualization/scheme_comparison.png)
-
-### 各方案调色板
-每个方案的完整调色板，包含浅色和深色变体：
+### 所有方案的桌面体验模拟
+适应性桌面调色板模拟（浅色与深色）
 
 | 方案 | 可视化 |
 |------|--------|
-| Content | ![Content 方案](example/visualization/scheme_content.png) |
-| Expressive | ![Expressive 方案](example/visualization/scheme_expressive.png) |
-| Fidelity | ![Fidelity 方案](example/visualization/scheme_fidelity.png) |
-| MonoChrome | ![MonoChrome 方案](example/visualization/scheme_monochrome.png) |
-| Neutral | ![Neutral 方案](example/visualization/scheme_neutral.png) |
-| Rainbow | ![Rainbow 方案](example/visualization/scheme_rainbow.png) |
-| TonalSpot | ![TonalSpot 方案](example/visualization/scheme_tonalspot.png) |
-| Vibrant | ![Vibrant 方案](example/visualization/scheme_vibrant.png) |
+| Content | ![Content 方案](example/visualization/desktop_concept_content.png) |
+| Expressive | ![Expressive 方案](example/visualization/desktop_concept_expressive.png) |
+| Fidelity | ![Fidelity 方案](example/visualization/desktop_concept_fidelity.png) |
+| MonoChrome | ![MonoChrome 方案](example/visualization/desktop_concept_monochrome.png) |
+| Neutral | ![Neutral 方案](example/visualization/desktop_concept_neutral.png) |
+| Rainbow | ![Rainbow 方案](example/visualization/desktop_concept_rainbow.png) |
+| TonalSpot | ![TonalSpot 方案](example/visualization/desktop_concept_tonalspot.png) |
+| Vibrant | ![Vibrant 方案](example/visualization/desktop_concept_vibrant.png) |
 
 ### 交互式预览
-包含所有可视化结果的 HTML 预览页面可在 [`https://acomage.github.io/material/`](index.html) 找到。
+包含所有可视化结果的 HTML 预览页面可在 [`https://acomage.github.io/material/`](https://acomage.github.io/material/) 找到。
 
 ### 生成可视化
 为你自己的图像生成类似的可视化结果：
@@ -70,10 +65,4 @@ LEAN_CC=clang lake build
    ```bash
    cd example
    python generate_visualization.py
-   ```
-   该脚本需要 Python 以及 `matplotlib` 和 `numpy`。你可以使用 `uv` 管理依赖：
-   ```bash
-   uv venv .venv
-   source .venv/bin/activate
-   uv pip install matplotlib numpy
    ```
