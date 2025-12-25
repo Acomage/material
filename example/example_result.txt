@@ -32,7 +32,7 @@ outlineVariant: Color #c2c5d5
 shadow: Color #000000
 scrim: Color #000000
 surfaceTint: Color #1857c5
-primary: Color #000000
+primary: Color #0047ad
 primaryContainer: Color #2660ce
 onPrimary: Color #fefefe
 onPrimaryContainer: Color #dde3fe
@@ -41,7 +41,7 @@ secondary: Color #4c5d88
 secondaryContainer: Color #bdcdfe
 onSecondary: Color #fefefe
 onSecondaryContainer: Color #465681
-tertiary: Color #000000
+tertiary: Color #78268f
 tertiaryContainer: Color #9442aa
 onTertiary: Color #fefefe
 onTertiaryContainer: Color #fcd8fe
@@ -256,7 +256,7 @@ outlineVariant: Color #c2c5d5
 shadow: Color #000000
 scrim: Color #000000
 surfaceTint: Color #1857c5
-primary: Color #000000
+primary: Color #0047ad
 primaryContainer: Color #2660ce
 onPrimary: Color #fefefe
 onPrimaryContainer: Color #dde3fe
@@ -265,7 +265,7 @@ secondary: Color #4c5d88
 secondaryContainer: Color #bdcdfe
 onSecondary: Color #fefefe
 onSecondaryContainer: Color #465681
-tertiary: Color #000000
+tertiary: Color #843600
 tertiaryContainer: Color #aa4800
 onTertiary: Color #fefefe
 onTertiaryContainer: Color #feddce
