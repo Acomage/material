@@ -34,13 +34,16 @@ public def foregroundTone (bgTone ratio : Float) : Float :=
   else
     if darkerRatio >= ratio || darkerRatio >= lighterRatio then darkerTone else lighterTone
 
+-- maybe can be speeded up with binary search?
+-- TODO: review this function for performance
 public def findDesiredChromaByTone (hue chroma tone : Float) (by_decreasing_tone : Bool) : Float := Id.run do
   let mut answer := tone
   let mut closest_to_chroma := Hct.fromHct hue chroma tone
+  let step := if by_decreasing_tone then -1.0 else 1.0
   if closest_to_chroma.chroma < chroma then
     let mut chroma_peak := closest_to_chroma.chroma
     while closest_to_chroma.chroma < chroma do
-      answer := answer + (if by_decreasing_tone then -1.0 else 1.0)
+      answer := answer + step
       let potential_solution := Hct.fromHct hue chroma answer
       if chroma_peak > potential_solution.chroma then
         break

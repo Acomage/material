@@ -1,0 +1,213 @@
+#+title:Google implement Hct solver wrong
+#+author:Acomage
+#+email:acomage468@gmail.com
+* 摘要
+在重写 Google Material Color Utilities（MCU）的过程中，我偶然发现了一个隐藏得很深、但在几何与拓扑意义上都非常有趣的错误：
+HCT Solver在高亮度区域（接近白色）的行为是错误的，而且这是一个结构性错误，而非实现细节问题。
+
+这个问题并不会导致Material You在视觉上“明显翻车”，但它暴露了HCT 求解算法在数学建模上的一个关键盲区。
+本文将从色彩空间和拓扑不变量的角度解释这个Bug的成因，并给出可以严格解释其失败边界的分析。
+
+* 什么是Hct Solver
+** 什么是Hct
+Google的Material Color Utilities是Material Design的核心基础设施之一。
+在MCU中，Google设计了一种名为HCT（Hue–Chroma–Tone）的色彩空间，用于描述UI颜色。
+
+HCT由三个参数组成：
+
+- Hue：色相，对应CAM16-JCh中的Hue，表示在色环上的角度
+  取值范围通常为[0,360)
+
+- Chroma：色度，对应CAM16-JCh中的Chroma，表示颜色的鲜艳程度
+  理论上无上限，但现实可达范围有限（通常 < 200）
+
+- Tone：亮度，与CIELAB中的L∗一致
+  取值范围为[0,100]
+
+HCT 的设计目标是：
+
+用更符合人类感知直觉的方式描述UI颜色，同时保持与物理显示设备的可映射性。
+
+** 如何在Hct与RGB间转换
+从RGB到Hct的转换是容易的，我们只需要先把RGB转化为Cam16-jch,得到Hue和Chroma，然后转
+换到XYZ，通过Y计算出Tone即可。
+
+然而从Hct到RGB的转换就没这么容易了，因为从RGB到Hct的转换并不是满射，并非所有(H, C, T)都对应一个可显示的RGB颜色。比如Google自己的文档中提到：
+#+begin_quote
+Note that while HCT is infinite, it can describe colors like H26 C231 T100. However, that color isn’t “real.” There is no such color as a red (H26) that is extremely colorful (C231) and the same brightness as white (T100). When it is converted to RGB to be displayed, HCT keeps the tone, and reduces chroma until the color is feasible.
+#+end_quote
+把Hct转换为RGB的函数就是Hct slover, 本文讨论那些不存在对应可显示RGB颜色的情况，这时
+Hct Slover的任务是一个约束优化问题：
+
+> 在所有Hue和Tone正确的RGB颜色中，找到Chroma尽可能大的那个。
+
+* Hct求解
+** RGB到Hct的具体算法
+为了理解HCT Solver的行为，首先需要明确RGB → HCT的计算路径。
+下面的代码来自我用Lean4重写的`Hct.fromInt`，与Google原实现在数学上等价
+#+begin_src Lean4
+public def Hct.fromInt (argb : UInt32) : Hct :=
+  let cam := Cam16.fromInt argb
+  let tone := ColorUtils.lstarFromArgb argb
+  ⟨cam.hue, cam.chroma, tone, argb⟩
+
+public def Cam.fromInt (argb : UInt32) (viewingConditions : ViewingConditions := DEFAULT) : Cam16 :=
+  let xyz := xyzFromArgb argb
+  let rgbT := xyz * XYZ_TO_CAM16RGB
+  let rgbD := viewingConditions.rgbD * rgbT
+  let rgbAf := rgbD.map (fun cD => (viewingConditions.fl * cD.abs / 100.0) ^ 0.42)
+  let rgbA := rgbAf.zipWith (fun cAF cD =>
+  signum cD * 400.0 * cAF / (cAF + 27.13)
+  ) rgbD
+  let a := (#v[11.0, -12.0, 1.0] * rgbA).sum / 11.0
+  let b := (#v[1.0, 1.0, -2.0] * rgbA).sum / 9.0
+  let u := (#v[20.0, 20.0, 21.0] * rgbA).sum / 20.0
+  let p2 := (#v[40.0, 20.0, 1.0] * rgbA).sum / 20.0
+  let hue := sanitizeDegreesDouble (toDegrees (b.atan2 a))
+  let ac := p2 * viewingConditions.nbb
+  let j := 100.0 * (ac / viewingConditions.aw) ^ (viewingConditions.c * viewingConditions.z)
+  let huePrime := if hue < 20.14 then hue + 360.0 else hue
+  let eHue := 0.25 * ((toRadians huePrime + 2.0).cos + 3.8)
+  let p1 := 50000.0 / 13.0 * eHue * viewingConditions.nc * viewingConditions.ncb
+  let t := p1 * (hypot a b) / (u + 0.305)
+  let alpha := (1.64 - 0.29 ^ viewingConditions.n) ^ 0.73 * t ^ 0.9
+  let c := alpha * (j / 100.0).sqrt
+  ⟨hue, c⟩
+
+public def lstarFromArgb (argb : UInt32) : Float :=
+  let y := (xyzFromArgb argb)[1]
+  lstarFromY y
+
+public def lstarFromY (y : Float) : Float :=
+  labF (y / 100.0) * 116.0 - 16.0
+
+public def xyzFromArgb (argb : UInt32) : MathUtils.Vec3 :=
+  let r := redFromArgb argb
+  let g := greenFromArgb argb
+  let b := blueFromArgb argb
+  #v[r, g, b].map (linearized ∘ (UInt32.toFloat)) * SRGB_TO_XYZ
+#+end_src
+
+无论是Hue、Chroma还是Tone，最终都依赖于linear RGB。
+因此，在分析HCT Solver时，最自然的几何舞台是linear RGB空间。
+
+在本文中：
+- linear RGB每个通道取值为[0, 100]
+- linear RGB空间是一个立方体
+  \[
+  L = [0, 100]^3
+  \]
+
+** 理解求解的几何直觉
+从linear RGB求Tone的算法不难发现，Tone其实可以从linear RGB做一个仿射变换得到，所以在
+linear RGB空间中等Tone面就是一个平面并且具有确定的法向量，而截距则由Tone值决定。注意
+到Y和Tone之间其实一一对应，也可以说截距由Y决定，后面我们会使用Y而不是Tone作为Tone平
+面的参数。
+
+我们的目标是在linear RGB立方体中找到一个点，使其具有指定的Hue和Tone,并且Chroma尽可能
+大。该点具有指定的Tone说明该点就在对应的Tone平面上，所以我们是要在Tone平面与linear
+RGB cube的截面多边形中找到Hue值为指定值且Chroma尽可能大的点。
+给定一个Tone(或等价地给定一个Y)，
+我们得到的是：
+- 一个平面
+- 与立方体L相交
+- 形成一个*截面多边形*
+
+HCT Solver的目标就变成了：
+ > 在这个截面多边形中，找到 Hue正确、且Chroma最大的点。
+
+接下来我们考虑Hue。
+
+这里给一个从上面代码中提取出的从linear RGB计算Hue的函数：
+为了便利，这里使用弧度制，取值范围为-pi到pi，我们把一大堆线性
+代数运算都压缩到矩阵SCALED_DISCOUNT_FROM_LINRGB中。
+#+begin_src Lean4
+def chromaticAdaptation (component : Float) : Float :=
+  let af := component.abs ^ 0.42
+  signum component * 400.0 * af / (af + 27.13)
+
+def hueOf (linrgb : Vec3) : Float :=
+  let rgbA := (linrgb * SCALED_DISCOUNT_FROM_LINRGB).map chromaticAdaptation
+  let a := (#v[11.0, -12.0, 1.0] * rgbA).sum / 11.0
+  let b := (#v[1.0, 1.0, -2.0] * rgbA).sum / 9.0
+  b.atan2 a
+#+end_src
+
+为了方便，把hueOf看成是到S^1(即色环)的函数。
+
+可以看到在这种情况下，hueOf的奇点就是那些使a = b = 0的点
+
+注意到a = b = 0其实就是说rgbA是[1, 1, 1]的倍数，由于chromaticAdaptation的单调性，
+实际上这就意味着linrgb * SCALED_DISCOUNT_FROM_LINRGB是[1, 1, 1]的倍数,而这又可以解得
+linrgb是[1, 0.962, 0.955]的倍数（由于浮点数值的问题，这可能有一点误差,并且这条线还随
+viewingCondition变化，这里给出的是默认viewingCondition下的数值。），这些奇点即是灰点，而
+这条由灰点构成的线，我们称之为灰轴。
+
+因此立方体边界上除了(0, 0, 0)外还有一个奇点(100, 96.2, 95.5)，这个点在Y=96.943733对应
+的Tone平面，记住这个数值，因为我们将看到Google的Hct Solver算法在Y>=96.943733之后失效。
+
+假设Y!=96.943733,那么截面多边形上没有奇点。
+
+考虑对截面的边界逆时针参数化，得到曲线：
+\[
+\gamma : S^1 -> L
+\]
+该曲线上有一个连续函数Hue，其实就是hueOf在曲线上的限制。
+
+我们把它拉回到\gamma的参数空间S^1中，仍记作Hue : S^1 -> S^1
+
+当我们变化Y时，只要不跨过奇点，Hue就在连续的变化，或者说同伦地变化，此时我们可以考虑一个
+同伦不变量，即Hue的环绕数deg(Hue)
+
+对于Y \in (0, 96.943733)和Y \in (96.943733, 100)，我们分别计算其环绕数为：
+\[
+deg(Hue) = 1, Y \in (0, 96.943733)
+deg(Hue) = 0, Y \in (96.943733, 100)
+\]
+
+对于Y < 96.943733的情况，环绕数为1意味着Hue是个满射，我们可以在截面多边形的边缘找到
+Tone和Hue同时满足条件的点。实际上，Hue还是个单射，这点需要由hueOf是个保持截面多边形边界
+和内部并且保持截面多边形是相对于截面多边形中的奇点（Y < 96.943733时必然存在）的星形域保证。
+
+更一般的，这对包含奇点的星形域的边界也成立，这暗示着在截面多边形中，等Hue曲线是从奇点到边
+沿的一条曲线，容易验证，沿着这条曲线从奇点向边界运动时Chroma单调地增大，于是对于Y < 96.943733
+的情况，我们只需去截面多边形的边界二分，很快就能找到目标点。
+
+** 但是，Y > 96.943733呢？
+Google的算法并没有管这么多，他们的实现就是在截面多边形的边界二分。于是我们可以尝试构造一个
+让Google的算法表现糟糕的反例：
+#+begin_src Lean4
+def testHctSolver (hueDegrees chroma lstar : Float) : Float :=
+  let I := HctSolver.solveToInt hueDegrees chroma lstar
+  let hct := Hct.fromInt I
+  let h := hct.hue
+  let diff := (h - hueDegrees).abs
+  min diff (360 - diff)
+
+#eval testHctSolver 10 250 99 --84.813036
+#+end_src
+如你所见，这是我随手构造的例子，甚至Hue, Chroma，Tone全是整数，这种情况下，求解出来的结果
+的Hue与目标的Hue差85度，这显然是个糟糕的结果，但是对于颜色来说，这不是一个大问题，因为在屏
+幕上足够亮的颜色都看起来像是白色。
+
+那实际上，Y>96.943733的时候是什么情况呢？
+
+注意到(100, 100, 100)并不是奇点，并且在Y增大到Y>96.943733之后，就不会再遇到奇点了，
+这会意味着这时的截面多边形的边缘随着Y增大可缩到(100, 100, 100)对应的点，这意味着此时
+的deg(Hue)一定会是0,实际上由于hueOf的连续性，我们甚至可以知道在Y充分大之后，Tone平
+面上的点的Hue值都在(100, 100, 100)对应的Hue值的任意小邻域，这意味着在这种情况下，
+可能根本就不存在Tone和Hue同时满足条件的点。
+
+正如上面所说的，在这种Tone下，几乎不管什么颜色都看起来和白色没有什么区别了，因此直接当成
+灰值处理不失为一种选择。
+
+另一种选择是降低Tone,直到存在满足Tone和Hue条件的点,因为一旦Tone降低到
+Y < 96.943733，就一定有解了,这时的Tone为98.805996，因此不会将Tone降低太多。
+
+* 结语
+这个Bug的有趣之处在于：
+- 它不是实现错误
+- 不是数值稳定性问题
+- 而是*几何与拓扑结构被误判*
+
+HCT Solver在大多数UI场景下“看起来没问题”，但在数学上，它在高亮度区域必然失败。

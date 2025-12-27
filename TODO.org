@@ -1,10 +1,10 @@
 #+title:     TodoLists
 #+author:    Acomage
 #+email:     acomage468@gmail.com
-* TODO Refactor lean code [1/8]
+* TODO Refactor lean code [0/8]
 - [ ] Blend
 - [ ] Contrast
-- [X] DynamicColor
+- [ ] DynamicColor
 - [ ] Hct
 - [ ] Palettes
 - [ ] Scheme
