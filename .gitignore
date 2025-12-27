@@ -8,3 +8,7 @@ build
 lib
 res*.txt
 test.*
+.python-version
+pyproject.toml
+uv.lock
+.venv

@@ -3,7 +3,6 @@ public import Material.Utils.ColorUtils
 public import Material.Utils.MathUtils
 public import Material.Hct.ViewingConditions
 
-
 open MathUtils ColorUtils ViewingConditions
 
 def SCALED_DISCOUNT_FROM_LINRGB := #v[
@@ -19,8 +18,6 @@ def LINRGB_FROM_SCALED_DISCOUNT := #v[
 
 def Y_FROM_LINRGB := #v[0.2126, 0.7152, 0.0722]
 
-def CRITICAL_PLANES := (Vector.range 255).map (fun x => linearized (x.toFloat + 0.5))
-
 def chromaticAdaptation (component : Float) : Float :=
   let af := component.abs ^ 0.42
   signum component * 400.0 * af / (af + 27.13)
@@ -31,53 +28,14 @@ def hueOf (linrgb : Vec3) : Float :=
   let b := (#v[1.0, 1.0, -2.0] * rgbA).sum / 9.0
   b.atan2 a
 
+def lstarSingular := ColorUtils.lstarFromY (100 * 0.2126 + 96.18310557389496 * 0.7152 + 95.47888926024586 * 0.0722)
+
 def areInCycleOrder (a b c : Float) : Bool :=
   let deltaAB := sanitizeRadians (b - a)
   let deltaAC := sanitizeRadians (c - a)
   deltaAB < deltaAC
 
-def intercept (source mid target : Float) : Float :=
-  (mid - source) / (target - source)
-
-def lerpPoint (source : Vec3) (t : Float) (target : Vec3) : Vec3 :=
-  source.zipWith (fun so ta => so + (ta - so) * t) target
-
-def setCoordinate (source : Vec3) (coordinate : Float) (target : Vec3) (axis : Fin 3) : Vec3 :=
-  let t := intercept (source[axis]) coordinate (target[axis])
-  lerpPoint source t target
-
-def isBounded (x : Float) : Bool :=
-  0.0 <= x && x <= 100.0
-
-/--
-  as we all know that a valid y should be in [0, 100]
-  notice that:
-    when n = 0,
-      if r is bounded, then we have a valid result.
-      but at that time, g = 0, b = 0
-      so r = y/kR
-    when n = 5
-      if g is bounded, then we have a valid result.
-      but at that time, r = 100, b = 0
-      so g = (y - 100kR)/kG
-    when n = 11
-      if b is bounded, then we have a valid result.
-      but at that time, r = 100, g = 100
-      so b = (y - 100kR - 100kG)/kB
-    if when n = 0, r is unbounded, because y/KR is never less then 0,
-    y/kR must be greater than 100, which means y > 100*kR,
-    so that (y - 100kR)/kG is always greater than 0
-    if when n = 11, b is unbounded, because (y - 100kR - 100kG)/kB is never greater than 100,
-    (y - 100kR - 100kG)/kB must be less than 0, which means y < 100kR + 100kG
-    so that (y - 100kR)/kG is always less than 100
-    summarizing the above analysis, when y is in [0, 100],
-    one of n = 0, 5, 11 will give a valid vertex.
-    
-    Another important property is that the returned Vec3 is always in [0, 100],
-    because the coordA and coordB is always either 0 or 100,
-    and the calculated coordinate is always bounded checked by isBounded.
--/
-def nthVertex (y : Float) (n : Fin 12) : Option Vec3 :=
+def nthVertex (y : Float) (n : Nat) : Vec3 :=
   let kR := Y_FROM_LINRGB[0]
   let kG := Y_FROM_LINRGB[1]
   let kB := Y_FROM_LINRGB[2]
@@ -87,127 +45,66 @@ def nthVertex (y : Float) (n : Fin 12) : Option Vec3 :=
     let g := coordA
     let b := coordB
     let r := (y - g * kG - b * kB) / kR
-    if isBounded r then
-      some #v[r, g, b]
-    else
-      none
+    #v[r, g, b]
   else if n < 8 then
     let b := coordA
     let r := coordB
     let g := (y - r * kR - b * kB) / kG
-    if isBounded g then
-      some #v[r, g, b]
-    else
-      none
+    #v[r, g, b]
   else
     let r := coordA
     let g := coordB
     let b := (y - r * kR - g * kG) / kB
-    if isBounded b then
-      some #v[r, g, b]
+    #v[r, g, b]
+
+def nthVertexList (y : Float) : Array Vec3 :=
+  let edges :=
+    if y < 7.22 then
+      #[0, 4, 8]
+    else if y < 21.26 then
+      #[0, 4, 6, 1]
+    else if y < 28.48 then
+      #[1, 10, 5, 4, 6]
+    else if y < 71.52 then
+      #[5, 4, 6, 7]
+    else if y < 78.74 then
+      #[5, 2, 9, 6, 7]
+    else if y < 92.78 then
+      #[2, 3, 7, 5]
     else
-      none
+      #[3, 7, 11]
+  edges.map (fun n => nthVertex y n)
 
-/--
-  notice that when y is in [0, 100], at least one vertex is valid.
-  that means in the loop, left and right will always be assigned to a non-none value.
-  So the final get! is safe.
-  the value returned in the 2 Vec3 is always in [0, 100],
-  because they are from nthVertex, which always returns a Vec3 in [0, 100] if it's not none.
--/
-def bisectToSegment (y targetHue : Float) : Vector Vec3 2 := runST fun s => do
-    let leftRef : (ST.Ref s (Option Vec3)) ← ST.mkRef none
-    let rightRef : (ST.Ref s (Option Vec3)) ← ST.mkRef none
-    let leftHueRef : (ST.Ref s Float) ← ST.mkRef 0.0
-    let rightHueRef : (ST.Ref s Float) ← ST.mkRef 0.0
-    let initializedRef : (ST.Ref s Bool) ← ST.mkRef false
-    let uncutRef : (ST.Ref s Bool) ← ST.mkRef true
-    for n in Array.finRange 12 do
-      match nthVertex y n with
-      | none => continue
-      | some mid =>
-        let midHue := hueOf mid
-        let initialized ← initializedRef.get
-        if !initialized then
-          leftRef.set (some mid)
-          rightRef.set (some mid)
-          leftHueRef.set midHue
-          rightHueRef.set midHue
-          initializedRef.set true
-        else
-          let uncut ← uncutRef.get
-          let leftHue ← leftHueRef.get
-          let rightHue ← rightHueRef.get
-          if uncut || areInCycleOrder leftHue midHue rightHue then
-            uncutRef.set false
-            if areInCycleOrder leftHue targetHue midHue then
-              rightRef.set (some mid)
-              rightHueRef.set midHue
-            else
-              leftRef.set (some mid)
-              leftHueRef.set midHue
-          else continue
-    let left ← leftRef.get
-    let right ← rightRef.get
-    return #v[left.get!, right.get!]
+def ccwDist (a b : Float) : Float :=
+  (b - a + 2 * Pi) % (2 * Pi)
 
-def midpoint (a b : Vec3) : Vec3 :=
-  lerpPoint a 0.5 b
+def bisectToSegment (y targetHue : Float) : Vector Vec3 2 :=
+  let targetHue := if targetHue > Pi then targetHue - 2 * Pi else targetHue
+  let vertices := nthVertexList y
+  let distances := vertices.map (fun v => ccwDist targetHue (hueOf v))
+  let left := vertices[argMax distances]!
+  let right := vertices[argMin distances]!
+  #v[left, right]
 
-def criticalPlaneBelow (x : Float) : Int32 :=
-  (x - 0.5).floor.toInt32
-
-def criticalPlaneAbove (x : Float) : Int32 :=
-  (x - 0.5).ceil.toInt32
-
-def clampToFin255 (n : Int32) : Fin 255 :=
-  let m := n.toNatClampNeg
-  if h : m > 254 then
-    Fin.mk 254 (by decide)
-  else
-    Fin.mk m (by grind)
-
-def bisectToLimit (y targetHue : Float) : Vec3 := runST fun s => do
-    let segment := bisectToSegment y targetHue
-    let leftRef : (ST.Ref s Vec3) ← ST.mkRef segment[0]
-    let leftHueRef : (ST.Ref s Float) ← ST.mkRef (hueOf segment[0])
-    let rightRef : (ST.Ref s Vec3) ← ST.mkRef segment[1]
-    for axis in Array.finRange 3 do
-      let left ← leftRef.get
-      let right ← rightRef.get
-      if left[axis] == right[axis] then
-        continue
+def bisectToLimit (y targetHue : Float) : Vec3 :=
+  let segment := bisectToSegment y targetHue
+  let left0  := segment[0]
+  let right0 := segment[1]
+  let hueLeft := hueOf left0
+  let f (t : Float) : Vec3 :=
+    left0 + t * (right0 - left0)
+  let rec loop (lo hi : Float) (n : Nat) : Float :=
+    match n with
+    | 0 => (lo + hi) / 2
+    | m + 1 =>
+      let mid := (lo + hi) / 2
+      let midHue := hueOf (f mid)
+      if areInCycleOrder hueLeft targetHue midHue then
+        loop lo mid m
       else
-        let lPlaneRef : (ST.Ref s Int32) ← ST.mkRef (if left[axis] < right[axis]
-          then criticalPlaneBelow (trueDelinearized left[axis])
-          else criticalPlaneAbove (trueDelinearized left[axis]))
-        let rPlaneRef : (ST.Ref s Int32) ← ST.mkRef (if left[axis] < right[axis]
-          then criticalPlaneAbove (trueDelinearized right[axis])
-          else criticalPlaneBelow (trueDelinearized right[axis]))
-        for i in Array.finRange 8 do
-          let rPlane ← rPlaneRef.get
-          let lPlane ← lPlaneRef.get
-          if (rPlane - lPlane).abs <= 1 then
-            break
-          else
-            let mPlane := (lPlane + rPlane) / 2
-            -- mPlane is always in [0, 255]
-            -- because lPlane and rPlane are always in [0, 255]
-            -- that's because when trueDelinearized's input is in [0, 100], its output is in [0, 255]
-            -- since left[axis] and right[axis] are from bisectToLimit, it's value is always in [0, 100]
-            /- let mPlane' := clampToFin255 mPlane -/
-            /- let midPlaneCoordinate := CRITICAL_PLANES[mPlane'] -/
-            let midPlaneCoordinate := CRITICAL_PLANES[mPlane.toNatClampNeg]!
-            let mid := setCoordinate left midPlaneCoordinate right axis
-            let midHue := hueOf mid
-            if areInCycleOrder (←leftHueRef.get) targetHue midHue then
-              rightRef.set mid
-              rPlaneRef.set mPlane
-            else
-              leftRef.set mid
-              leftHueRef.set midHue
-              lPlaneRef.set mPlane
-    return midpoint (←leftRef.get) (←rightRef.get)
+        loop mid hi m
+  let t := loop 0.0 1.0 8
+  f t
 
 def inverseChromaticAdaptation (adapted : Float) : Float :=
   let adaptedAbs := adapted.abs
@@ -258,7 +155,7 @@ def findResultByJ (hueRadians chroma y : Float) : UInt32 := runST fun s => do
 namespace HctSolver
 
 public def solveToInt (hueDegrees chroma lstar : Float) : UInt32 :=
-  if (chroma < 0.0001 || lstar < 0.0001 || lstar > 99.9999) then
+  if (chroma < 0.0001 || lstar < 0.0001 || lstar >= lstarSingular) then
     argbFromLstar lstar
   else
     let hueRadians := toRadians (sanitizeDegreesDouble hueDegrees)
