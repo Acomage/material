@@ -28,7 +28,14 @@ inductive Palette
 
 abbrev ToneFn := DynamicScheme → Float
 
+abbrev ToneFnPair := DynamicScheme → Float × Float
+
 structure DynamicColor where
   name : String
   toneFn : ToneFn
+  palette : Palette
+
+structure DynamicColorPair where
+  name : String
+  toneFn : ToneFnPair
   palette : Palette

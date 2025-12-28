@@ -54,9 +54,9 @@ def dealWithImage (imagePath : String) : IO Unit := do
     println (showAllColors fidelityLight)
     println "\nScheme Fidelity Dark:"
     println (showAllColors fidelityDark)
-    println "\nScheme Fruit Salad Light:"
+    println "\nScheme FruitSalad Light:"
     println (showAllColors fruitSaladLight)
-    println "\nScheme Fruit Salad Dark:"
+    println "\nScheme FruitSalad Dark:"
     println (showAllColors fruitSaladDark)
     println "\nScheme MonoChrome Light:"
     println (showAllColors monoChromeLight)

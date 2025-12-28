@@ -3,9 +3,7 @@ public import Material.DynamicColor.Types
 public import Material.Dislike.DislikeAnalyzer
 public import Material.DynamicColor.DynamicColor
 
-
 open MathUtils DislikeAnalyzer
-
 
 def primaryPaletteKeyColor : ToneFn :=
   fromPalette (fun ds => ds.primaryPalette)
@@ -57,29 +55,24 @@ def hightestSurface : ToneFn :=
   darkLight surfaceBright surfaceDim
 
 def onSurface : ToneFn :=
-  /- onOther ⟨4.5, 7.0, 11.0, 21.0⟩ (darkLightConst 90.0 10.0) hightestSurface -/
   withContrast hightestSurface ⟨4.5, 7.0, 11.0, 21.0⟩ (darkLightConst 90.0 10.0)
 
 def surfaceVariant : ToneFn :=
   darkLightConst 30.0 90.0
 
 def onSurfaceVariant : ToneFn :=
-  /- onOther ⟨3.0, 4.5, 7.0, 11.0⟩ (darkLightConst 80.0 30.0) hightestSurface -/
   withContrast hightestSurface ⟨3.0, 4.5, 7.0, 11.0⟩ (darkLightConst 80.0 30.0)
 
 def inverseSurface : ToneFn :=
   darkLightConst 90.0 20.0
 
 def inverseOnSurface : ToneFn :=
-  /- onOther ⟨4.5, 7.0, 11.0, 21.0⟩ (darkLightConst 20.0 95.0) inverseSurface -/
   withContrast inverseSurface ⟨4.5, 7.0, 11.0, 21.0⟩ (darkLightConst 20.0 95.0)
 
 def outline : ToneFn :=
-  /- onOther ⟨1.5, 3.0, 4.5, 7.0⟩ (darkLightConst 60.0 50.0) hightestSurface -/
   withContrast hightestSurface ⟨1.5, 3.0, 4.5, 7.0⟩ (darkLightConst 60.0 50.0)
 
 def outlineVariant : ToneFn :=
-  /- onOther ⟨1.0, 1.0, 3.0, 4.5⟩ (darkLightConst 30.0 80.0) hightestSurface -/
   withContrast hightestSurface ⟨1.0, 1.0, 3.0, 4.5⟩ (darkLightConst 30.0 80.0)
 
 def shadow : ToneFn :=
@@ -300,21 +293,21 @@ public def allMaterialDynamicColors : List DynamicColor :=
     ⟨"scrim", scrim, .neutral⟩,
     ⟨"surfaceTint", surfaceTint, .primary⟩,
     ⟨"primary", primary, .primary⟩,
-    ⟨"primaryContainer", primaryContainer, .primary⟩,
     ⟨"onPrimary", onPrimary, .primary⟩,
+    ⟨"primaryContainer", primaryContainer, .primary⟩,
     ⟨"onPrimaryContainer", onPrimaryContainer, .primary⟩,
     ⟨"inversePrimary", inversePrimary, .primary⟩,
     ⟨"secondary", secondary, .secondary⟩,
-    ⟨"secondaryContainer", secondaryContainer, .secondary⟩,
     ⟨"onSecondary", onSecondary, .secondary⟩,
+    ⟨"secondaryContainer", secondaryContainer, .secondary⟩,
     ⟨"onSecondaryContainer", onSecondaryContainer, .secondary⟩,
     ⟨"tertiary", tertiary, .tertiary⟩,
-    ⟨"tertiaryContainer", tertiaryContainer, .tertiary⟩,
     ⟨"onTertiary", onTertiary, .tertiary⟩,
+    ⟨"tertiaryContainer", tertiaryContainer, .tertiary⟩,
     ⟨"onTertiaryContainer", onTertiaryContainer, .tertiary⟩,
     ⟨"error", error, .error⟩,
-    ⟨"errorContainer", errorContainer, .error⟩,
     ⟨"onError", onError, .error⟩,
+    ⟨"errorContainer", errorContainer, .error⟩,
     ⟨"onErrorContainer", onErrorContainer, .error⟩,
     ⟨"primaryFixed", primaryFixed, .primary⟩,
     ⟨"primaryFixedDim", primaryFixedDim, .primary⟩,

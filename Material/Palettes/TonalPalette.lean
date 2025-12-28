@@ -42,36 +42,32 @@ structure KeyColor where
 
 namespace KeyColor
 
-def MAX_CHROMA_VALUE := 200.0
-
-def maxChroma (keyColor : KeyColor) (tone : Int32) : Float :=
-  (Hct.fromHct keyColor.hue MAX_CHROMA_VALUE tone.toFloat).chroma
-
-def create (keyColor : KeyColor) : Hct := runST fun s => do
+def create (keyColor : KeyColor) : Hct := Id.run do
   let pivotTone := 50
   let toneStepSize := 1
   let epsilon := 0.01
-  let lowerToneRef : (ST.Ref s Int32) ← ST.mkRef 0
-  let upperToneRef : (ST.Ref s Int32) ← ST.mkRef 100
-  while (←lowerToneRef.get) < (←upperToneRef.get) do
-    let lowerTone ← lowerToneRef.get
-    let upperTone ← upperToneRef.get
+  let hue := keyColor.hue
+  let requestedChroma := keyColor.requestedChroma
+  let maxChromaFn := fun tone : Int32 => HctSolver.maxChroma hue tone.toFloat
+  let mut lowerTone : Int32 := 0
+  let mut upperTone : Int32 := 100
+  while lowerTone < upperTone do
     let midTone := (lowerTone + upperTone) / 2
-    let sufficientChroma := maxChroma keyColor midTone >= keyColor.requestedChroma - epsilon
+    let sufficientChroma := maxChromaFn midTone >= requestedChroma - epsilon
     if sufficientChroma then
       if (lowerTone - pivotTone).abs < (upperTone - pivotTone).abs then
-        upperToneRef.set midTone
+        upperTone := midTone
       else if lowerTone == midTone then
-        return Hct.fromHct keyColor.hue keyColor.requestedChroma lowerTone.toFloat
+        return Hct.fromHct hue requestedChroma lowerTone.toFloat
       else
-        lowerToneRef.set midTone
+        lowerTone := midTone
     else
-      let isAscending := maxChroma keyColor midTone < maxChroma keyColor (midTone + toneStepSize)
+      let isAscending := maxChromaFn midTone < maxChromaFn (midTone + toneStepSize)
       if isAscending then
-        lowerToneRef.set (midTone + toneStepSize)
+        lowerTone := midTone + toneStepSize
       else
-        upperToneRef.set midTone
-  return Hct.fromHct keyColor.hue keyColor.requestedChroma (←lowerToneRef.get).toFloat
+        upperTone := midTone
+  return Hct.fromHct hue requestedChroma lowerTone.toFloat
 
 end KeyColor
 

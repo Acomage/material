@@ -1,9 +1,9 @@
 module
+public import Material.Hct.HctSolver
 public import Material.DynamicColor.Types
 public import Material.Contrast.Contrast
 public import Material.DynamicColor.ContrastCurve
 public import Material.Utils.MathUtils
-
 
 -- some helpers
 
@@ -35,25 +35,28 @@ public def foregroundTone (bgTone ratio : Float) : Float :=
     if darkerRatio >= ratio || darkerRatio >= lighterRatio then darkerTone else lighterTone
 
 -- maybe can be speeded up with binary search?
+-- maybe cache results?
 -- TODO: review this function for performance
 public def findDesiredChromaByTone (hue chroma tone : Float) (by_decreasing_tone : Bool) : Float := Id.run do
+  let maxChromaFn := HctSolver.maxChroma hue
+  let epsilon := 0.4
   let mut answer := tone
-  let mut closest_to_chroma := Hct.fromHct hue chroma tone
+  let mut closest_to_chroma := maxChromaFn tone
   let step := if by_decreasing_tone then -1.0 else 1.0
-  if closest_to_chroma.chroma < chroma then
-    let mut chroma_peak := closest_to_chroma.chroma
-    while closest_to_chroma.chroma < chroma do
+  if closest_to_chroma < chroma then
+    let mut chroma_peak := closest_to_chroma
+    while closest_to_chroma < chroma do
       answer := answer + step
-      let potential_solution := Hct.fromHct hue chroma answer
-      if chroma_peak > potential_solution.chroma then
+      let potential_solution := maxChromaFn answer
+      if chroma_peak > potential_solution then
         break
-      if (potential_solution.chroma - chroma).abs < 0.4 then
+      if potential_solution > chroma - epsilon then
         break
-      let potential_delta := (potential_solution.chroma - chroma).abs
-      let current_delta := (closest_to_chroma.chroma - chroma).abs
+      let potential_delta := (potential_solution - chroma).abs
+      let current_delta := (closest_to_chroma - chroma).abs
       if potential_delta < current_delta then
         closest_to_chroma := potential_solution
-      chroma_peak := max chroma_peak potential_solution.chroma
+      chroma_peak := max chroma_peak potential_solution
   return answer
 
 -- combinator.
@@ -162,6 +165,49 @@ public def toneFnPair
   (polarity : TonePolarity)
   (stay_together : Bool)
   (s : DynamicScheme) : Float × Float := Id.run do
+  let aIsNearer :=
+    match polarity with
+    | .nearer   => true
+    | .farther  => false
+    | .lighter  => not s.isDark
+    | .darker   => s.isDark
+  let nearer := if aIsNearer then roleA else roleB
+  let farther := if aIsNearer then roleB else roleA
+  let expansionDir := if s.isDark then 1.0 else -1.0
+  let mut n_tone := nearer s
+  let mut f_tone := farther s
+  if (f_tone - n_tone) * expansionDir < delta then
+    f_tone := clampDouble 0 100 (n_tone + delta * expansionDir)
+    if (f_tone - n_tone) * expansionDir < delta then
+      n_tone := clampDouble 0 100 (f_tone - delta * expansionDir)
+  if 50 <= n_tone && n_tone < 60 then
+    if expansionDir > 0 then
+      n_tone := 60
+      f_tone := max f_tone  (n_tone + delta * expansionDir)
+    else
+      n_tone := 49
+      f_tone := min f_tone (n_tone + delta * expansionDir)
+  else if 50 <= f_tone && f_tone < 60 then
+    if stay_together then
+      if expansionDir > 0 then
+        n_tone := 60
+        f_tone := max f_tone (n_tone + delta * expansionDir)
+      else
+        n_tone := 49
+        f_tone := min f_tone (n_tone + delta * expansionDir)
+    else
+      if expansionDir > 0 then
+        f_tone := 60
+      else
+        f_tone := 49
+  return (if aIsNearer then n_tone else f_tone, if aIsNearer then f_tone else n_tone)
+
+public def pair
+  (roleA roleB : ToneFn)
+  (delta : Float)
+  (polarity : TonePolarity)
+  (stay_together : Bool)
+  : DynamicScheme → Float × Float := fun s => Id.run do
   let aIsNearer :=
     match polarity with
     | .nearer   => true
