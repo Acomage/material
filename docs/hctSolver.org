@@ -1,0 +1,159 @@
+#+title: Google's HCT Solver Implementation is Mathematically Flawed
+#+author: Acomage
+#+email: acomage468@gmail.com
+
+* Abstract
+While rewriting Google's Material Color Utilities (MCU), I stumbled upon a deeply hidden yet geometrically and topologically fascinating error:
+The HCT Solver behaves incorrectly in high-luminance regions (near white). This is a structural flaw rather than a minor implementation detail.
+
+While this issue does not cause Material You to "fail" visually in an obvious way, it exposes a critical blind spot in the mathematical modeling of the HCT solver algorithm. This article explains the cause of this bug from the perspective of color spaces and topological invariants, providing an analysis that strictly defines its failure boundaries.
+
+* What is the HCT Solver?
+** What is HCT?
+Google’s Material Color Utilities is a core infrastructure of Material Design. In MCU, Google designed a color space called HCT (Hue–Chroma–Tone) to describe UI colors.
+
+HCT consists of three parameters:
+
+- *Hue*: Corresponding to the Hue in CAM16-JCh, representing the angle on the color wheel. Range: [0,360).
+- *Chroma*: Corresponding to the Chroma in CAM16-JCh, representing the colorfulness. Theoretically unbounded, but practically limited (usually < 200).
+- *Tone*: Equivalent to  in CIELAB. Range: [0, 100].
+
+The design goal of HCT is to describe UI colors in a way that aligns with human perceptual intuition while maintaining transformability to physical display devices.
+
+** Converting between HCT and RGB
+Converting from RGB to HCT is straightforward: transform RGB to CAM16-JCh to obtain Hue and Chroma, then convert to XYZ to calculate Tone via the Y coordinate.
+
+However, the inverse transformation (HCT to RGB) is difficult because the mapping from RGB to HCT is not surjective; not every (H, C, T) triplet corresponds to a displayable RGB color. As Google's documentation notes:
+#+begin_quote
+Note that while HCT is infinite, it can describe colors like H26 C231 T100. However, that color isn’t “real.” There is no such color as a red (H26) that is extremely colorful (C231) and the same brightness as white (T100). When it is converted to RGB to be displayed, HCT keeps the tone, and reduces chroma until the color is feasible.
+#+end_quote
+
+The function that converts HCT to RGB is the *HCT Solver*. This article discusses cases where a displayable RGB color does not exist. In these instances, the HCT Solver's task becomes a constrained optimization problem:
+
+> Find the RGB color with the maximum possible Chroma among all colors with the correct Hue and Tone.
+
+* HCT Solving
+** The Algorithm from RGB to HCT
+To understand the HCT Solver, we must first clarify the RGB → HCT calculation path. The following code is from my rewrite of `Hct.fromInt` in Lean 4, which is mathematically equivalent to Google’s implementation:
+
+#+begin_src Lean4
+public def Hct.fromInt (argb : UInt32) : Hct :=
+  let cam := Cam16.fromInt argb
+  let tone := ColorUtils.lstarFromArgb argb
+  ⟨cam.hue, cam.chroma, tone, argb⟩
+
+public def Cam.fromInt (argb : UInt32) (viewingConditions : ViewingConditions := DEFAULT) : Cam16 :=
+  let xyz := xyzFromArgb argb
+  let rgbT := xyz * XYZ_TO_CAM16RGB
+  let rgbD := viewingConditions.rgbD * rgbT
+  let rgbAf := rgbD.map (fun cD => (viewingConditions.fl * cD.abs / 100.0) ^ 0.42)
+  let rgbA := rgbAf.zipWith (fun cAF cD =>
+  signum cD * 400.0 * cAF / (cAF + 27.13)
+  ) rgbD
+  let a := (#v[11.0, -12.0, 1.0] * rgbA).sum / 11.0
+  let b := (#v[1.0, 1.0, -2.0] * rgbA).sum / 9.0
+  let u := (#v[20.0, 20.0, 21.0] * rgbA).sum / 20.0
+  let p2 := (#v[40.0, 20.0, 1.0] * rgbA).sum / 20.0
+  let hue := sanitizeDegreesDouble (toDegrees (b.atan2 a))
+  let ac := p2 * viewingConditions.nbb
+  let j := 100.0 * (ac / viewingConditions.aw) ^ (viewingConditions.c * viewingConditions.z)
+  let huePrime := if hue < 20.14 then hue + 360.0 else hue
+  let eHue := 0.25 * ((toRadians huePrime + 2.0).cos + 3.8)
+  let p1 := 50000.0 / 13.0 * eHue * viewingConditions.nc * viewingConditions.ncb
+  let t := p1 * (hypot a b) / (u + 0.305)
+  let alpha := (1.64 - 0.29 ^ viewingConditions.n) ^ 0.73 * t ^ 0.9
+  let c := alpha * (j / 100.0).sqrt
+  ⟨hue, c⟩
+
+public def lstarFromArgb (argb : UInt32) : Float :=
+  let y := (xyzFromArgb argb)[1]
+  lstarFromY y
+
+public def lstarFromY (y : Float) : Float :=
+  labF (y / 100.0) * 116.0 - 16.0
+
+public def xyzFromArgb (argb : UInt32) : MathUtils.Vec3 :=
+  let r := redFromArgb argb
+  let g := greenFromArgb argb
+  let b := blueFromArgb argb
+  #v[r, g, b].map (linearized ∘ (UInt32.toFloat)) * SRGB_TO_XYZ
+#+end_src
+
+Since Hue, Chroma, and Tone all ultimately depend on linear RGB, the natural geometric stage for analyzing the HCT Solver is the *linear RGB space*.
+
+In this analysis:
+
+- Linear RGB channels range from [0, 100].
+- The linear RGB space is a cube
+
+  \[
+  L = [0, 100]^3
+  \]
+
+** Geometric Intuition of the Solver
+Tone is derived from linear RGB via an affine transformation. Consequently, in linear RGB space, an *iso-Tone surface* is a plane with a fixed normal vector, where the intercept is determined by the Tone value (or equivalently, the Y value).
+
+Our goal is to find a point in the linear RGB cube L that matches a specific Hue and Tone while maximizing Chroma. Since a specified Tone places us on a plane, we are looking for the point with the target Hue and maximum Chroma within the *cross-section polygon* formed by the intersection of the Tone plane and the cube L.
+
+For a given Tone (or Y):
+
+- We have a plane.
+- It intersects the cube L.
+- It forms a cross-section polygon.
+
+The HCT Solver's objective is:
+
+> Within this cross-section polygon, find the point with the target Hue and the maximum Chroma.
+
+Now, consider *Hue*. Below is a `hueOf` function extracted from the logic above:
+#+begin_src Lean4
+def chromaticAdaptation (component : Float) : Float :=
+  let af := component.abs ^ 0.42
+  signum component * 400.0 * af / (af + 27.13)
+
+def hueOf (linrgb : Vec3) : Float :=
+  let rgbA := (linrgb * SCALED_DISCOUNT_FROM_LINRGB).map chromaticAdaptation
+  let a := (#v[11.0, -12.0, 1.0] * rgbA).sum / 11.0
+  let b := (#v[1.0, 1.0, -2.0] * rgbA).sum / 9.0
+  b.atan2 a
+#+end_src
+
+The singularities of `hueOf` occur where a = b = 0. This implies `rgbA` is a multiple of [1, 1, 1]. Due to the monotonicity of `chromaticAdaptation`, this means `linrgb * SCALED_DISCOUNT_FROM_LINRGB` is a multiple of [1, 0.962, 0.955]. Solving this yields a line of "gray points" where `linrgb` is a multiple of approximately  (subject to viewing conditions).
+
+Crucially, there is a singularity on the boundary of the cube at (100, 96.2, 95.5), which corresponds to a Tone plane where Y = 96.943733. *Google’s HCT Solver algorithm fails when Y >= 96.943733.*
+
+Assuming Y != 96.943733, there are no singularities on the cross-section polygon's boundary. If we parameterize the boundary counter-clockwise as a curve S^1 -> L, we can consider the continuous function Hue : S^1 -> S^1.
+
+As Y varies (without crossing the singularity), Hue changes homotopically. We can then analyze the *winding number* deg(Hue) :
+
+- For Y \in (0, 96.943733), deg(Hue) = 1.
+- For Y \in (96.643733, 100), deg(Hue) = 0.
+
+When the winding number is 1, Hue is surjective. We can always find a point on the boundary with the correct Hue. In fact, Hue is injective here because the cross-section is a star-shaped domain relative to the singularity. This implies that iso-Hue curves radiate from the singularity to the boundary, with Chroma increasing monotonically. In this case, a simple *binary search* on the boundary finds the target point.
+
+** But what happens when Y>=96.943733?
+Google’s algorithm simply performs a binary search on the boundary regardless of the  value. We can construct a counter-example where this fails spectacularly:
+
+#+begin_src Lean4
+def testHctSolver (hueDegrees chroma lstar : Float) : Float :=
+  let I := HctSolver.solveToInt hueDegrees chroma lstar
+  let hct := Hct.fromInt I
+  let h := hct.hue
+  let diff := (h - hueDegrees).abs
+  min diff (360 - diff)
+
+#eval testHctSolver 10 250 99 -- Output: 84.813036
+#+end_src
+
+In this example, the resulting Hue differs from the target by *85 degrees*. While visually this might be less "obvious" (since very bright colors all look white), it is a total failure of the solver's logic.
+
+When Y > 96.943733, the singularity is no longer inside the cross-section polygon. The boundary of the cross-section can be shrunk to a point, specifically (100, 100, 100), as Y increases. This means the winding number is 0. All points on the Tone plane will have Hue values clustered in a tiny neighborhood of the Hue of (100, 100, 100). *In this region, it is often mathematically impossible to find a point that satisfies both the target Tone and the target Hue.*
+
+* Conclusion
+The fascinating thing about this bug is:
+
+- It is not a coding error.
+- It is not a numerical stability issue.
+- It is a *misjudgment of the geometric and topological structure* of the space.
+
+The HCT Solver "looks fine" in most UI scenarios, but mathematically, it is guaranteed to fail in high-luminance regions.

@@ -3,9 +3,7 @@ public import Material.DynamicColor.Types
 public import Material.Dislike.DislikeAnalyzer
 public import Material.DynamicColor.DynamicColor
 
-
 open MathUtils DislikeAnalyzer
-
 
 def primaryPaletteKeyColor : ToneFn :=
   fromPalette (fun ds => ds.primaryPalette)
@@ -57,29 +55,24 @@ def hightestSurface : ToneFn :=
   darkLight surfaceBright surfaceDim
 
 def onSurface : ToneFn :=
-  /- onOther ⟨4.5, 7.0, 11.0, 21.0⟩ (darkLightConst 90.0 10.0) hightestSurface -/
   withContrast hightestSurface ⟨4.5, 7.0, 11.0, 21.0⟩ (darkLightConst 90.0 10.0)
 
 def surfaceVariant : ToneFn :=
   darkLightConst 30.0 90.0
 
 def onSurfaceVariant : ToneFn :=
-  /- onOther ⟨3.0, 4.5, 7.0, 11.0⟩ (darkLightConst 80.0 30.0) hightestSurface -/
   withContrast hightestSurface ⟨3.0, 4.5, 7.0, 11.0⟩ (darkLightConst 80.0 30.0)
 
 def inverseSurface : ToneFn :=
   darkLightConst 90.0 20.0
 
 def inverseOnSurface : ToneFn :=
-  /- onOther ⟨4.5, 7.0, 11.0, 21.0⟩ (darkLightConst 20.0 95.0) inverseSurface -/
   withContrast inverseSurface ⟨4.5, 7.0, 11.0, 21.0⟩ (darkLightConst 20.0 95.0)
 
 def outline : ToneFn :=
-  /- onOther ⟨1.5, 3.0, 4.5, 7.0⟩ (darkLightConst 60.0 50.0) hightestSurface -/
   withContrast hightestSurface ⟨1.5, 3.0, 4.5, 7.0⟩ (darkLightConst 60.0 50.0)
 
 def outlineVariant : ToneFn :=
-  /- onOther ⟨1.0, 1.0, 3.0, 4.5⟩ (darkLightConst 30.0 80.0) hightestSurface -/
   withContrast hightestSurface ⟨1.0, 1.0, 3.0, 4.5⟩ (darkLightConst 30.0 80.0)
 
 def shadow : ToneFn :=
@@ -100,23 +93,16 @@ def primaryContainerBase : ToneFn :=
 def primaryBase : ToneFn :=
   withContrast hightestSurface ⟨3.0, 4.5, 7.0, 7.0⟩ (monoChrome (darkLightConst 100.0 0.0) (darkLightConst 80.0 40.0))
 
-def primaryPair : ToneFn × ToneFn := pairConbinator 10.0 TonePolarity.nearer false (primaryContainerBase , primaryBase)
+def primaryPair : ToneFnPair := pair 10.0 TonePolarity.nearer false primaryContainerBase primaryBase
 
-def primaryContainer : ToneFn :=
-  primaryPair.1
-
-def primary : ToneFn :=
-  primaryPair.2
-
-def onPrimary : ToneFn :=
-  withContrast primary ⟨4.5, 7.0, 11.0, 21.0⟩ (monoChrome (darkLightConst 10.0 90.0) (darkLightConst 20.0 100.0))
-
-def onPrimaryContainer : ToneFn :=
-  withContrast
-    primaryContainer ⟨3.0, 4.5, 7.0, 11.0⟩
+def primaryGroup : ToneFnGroup :=
+  group0 primaryPair
+    ⟨3.0, 4.5, 7.0, 11.0⟩
+    ⟨4.5, 7.0, 11.0, 21.0⟩
     (fidelity
       (fun s => foregroundTone (primaryContainerTone s) 4.5)
       (monoChrome (darkLightConst 0.0 100.0) (darkLightConst 90.0 30.0)))
+    (monoChrome (darkLightConst 10.0 90.0) (darkLightConst 20.0 100.0))
 
 def inversePrimary : ToneFn :=
   withContrast inverseSurface ⟨3.0, 4.5, 7.0, 7.0⟩ (darkLightConst 40.0 80.0)
@@ -134,25 +120,18 @@ def secondaryContainerBase : ToneFn :=
 def secondaryBase : ToneFn :=
   withContrast hightestSurface ⟨3.0, 4.5, 7.0, 7.0⟩ (darkLightConst 80.0 40.0)
 
-def secondaryPair : ToneFn × ToneFn := pairConbinator 10.0 TonePolarity.nearer false (secondaryContainerBase , secondaryBase)
+def secondaryPair : ToneFnPair := pair 10.0 TonePolarity.nearer false secondaryContainerBase secondaryBase
 
-def secondaryContainer : ToneFn :=
-  secondaryPair.1
-
-def secondary : ToneFn :=
-  secondaryPair.2
-
-def onSecondary : ToneFn :=
-  withContrast secondary ⟨4.5, 7.0, 11.0, 21.0⟩ (monoChrome (darkLightConst 10.0 100.0) (darkLightConst 20.0 100.0))
-
-def onSecondaryContainer : ToneFn :=
-  withContrast
-    secondaryContainer ⟨3.0, 4.5, 7.0, 11.0⟩
+def secondaryGroup : ToneFnGroup :=
+  group0 secondaryPair
+    ⟨3.0, 4.5, 7.0, 11.0⟩
+    ⟨4.5, 7.0, 11.0, 21.0⟩
     (monoChrome
       (darkLightConst 90.0 10.0)
       (fidelity
         (fun s => foregroundTone (secondaryContainerTone s) 4.5)
      (darkLightConst 90.0 30.0)))
+    (monoChrome (darkLightConst 10.0 100.0) (darkLightConst 20.0 100.0))
 
 def tertiaryContainerTone : ToneFn :=
   monoChrome
@@ -172,25 +151,18 @@ def tertiaryContainerBase : ToneFn :=
 def tertiaryBase : ToneFn :=
   withContrast hightestSurface ⟨3.0, 4.5, 7.0, 7.0⟩ (monoChrome (darkLightConst 90.0 25.0) (darkLightConst 80.0 40.0))
 
-def tertiaryPair : ToneFn × ToneFn := pairConbinator 10.0 TonePolarity.nearer false (tertiaryContainerBase , tertiaryBase)
+def tertiaryPair : ToneFnPair := pair 10.0 TonePolarity.nearer false tertiaryContainerBase tertiaryBase
 
-def tertiaryContainer : ToneFn :=
-  tertiaryPair.1
-
-def tertiary : ToneFn :=
-  tertiaryPair.2
-
-def onTertiary : ToneFn :=
-  withContrast tertiary ⟨4.5, 7.0, 11.0, 21.0⟩ (monoChrome (darkLightConst 10.0 90.0) (darkLightConst 20.0 100.0))
-
-def onTertiaryContainer : ToneFn :=
-  withContrast
-    tertiaryContainer ⟨3.0, 4.5, 7.0, 11.0⟩
+def tertiaryGroup : ToneFnGroup :=
+  group0 tertiaryPair
+    ⟨3.0, 4.5, 7.0, 11.0⟩
+    ⟨4.5, 7.0, 11.0, 21.0⟩
     (monoChrome
       (darkLightConst 0.0 100.0)
       (fidelity
         (fun s => foregroundTone (tertiaryContainerTone s) 4.5)
         (darkLightConst 90.0 30.0)))
+    (monoChrome (darkLightConst 10.0 90.0) (darkLightConst 20.0 100.0))
 
 def errorContainerBase : ToneFn :=
   withContrast hightestSurface ⟨1.0, 1.0, 3.0, 4.5⟩ (darkLightConst 30.0 90.0)
@@ -198,19 +170,14 @@ def errorContainerBase : ToneFn :=
 def errorBase : ToneFn :=
   withContrast hightestSurface ⟨3.0, 4.5, 7.0, 7.0⟩ (darkLightConst 80.0 40.0)
 
-def errorPair : ToneFn × ToneFn := pairConbinator 10.0 TonePolarity.nearer false (errorContainerBase , errorBase)
+def errorPair : ToneFnPair := pair 10.0 TonePolarity.nearer false errorContainerBase errorBase
 
-def errorContainer : ToneFn :=
-  errorPair.1
-
-def error : ToneFn :=
-  errorPair.2
-
-def onError : ToneFn :=
-  withContrast error ⟨4.5, 7.0, 11.0, 21.0⟩ (darkLightConst 20.0 100.0)
-
-def onErrorContainer : ToneFn :=
-  withContrast errorContainer ⟨3.0, 4.5, 7.0, 11.0⟩ (monoChrome (darkLightConst 90.0 10.0) (darkLightConst 90.0 30.0))
+def errorGroup : ToneFnGroup :=
+  group0 errorPair
+    ⟨3.0, 4.5, 7.0, 11.0⟩
+    ⟨4.5, 7.0, 11.0, 21.0⟩
+    (monoChrome (darkLightConst 90.0 10.0) (darkLightConst 90.0 30.0))
+    (darkLightConst 20.0 100.0)
 
 def primaryFixedBase : ToneFn :=
   withContrast hightestSurface ⟨1.0, 1.0, 3.0, 4.5⟩ (monoChromeConst 40.0 90.0)
@@ -218,19 +185,14 @@ def primaryFixedBase : ToneFn :=
 def primaryFixedDimBase : ToneFn :=
   withContrast hightestSurface ⟨1.0, 1.0, 3.0, 4.5⟩ (monoChromeConst 30.0 80.0)
 
-def primaryFixedPair : ToneFn × ToneFn := pairConbinator 10.0 TonePolarity.lighter true (primaryFixedBase , primaryFixedDimBase)
+def primaryFixedPair : ToneFnPair := pair 10.0 TonePolarity.lighter true primaryFixedBase primaryFixedDimBase
 
-def primaryFixed : ToneFn :=
-  primaryFixedPair.1
-
-def primaryFixedDim : ToneFn :=
-  primaryFixedPair.2
-
-def onPrimaryFixed : ToneFn :=
-  withTwoBackgrounds primaryFixedDim primaryFixed ⟨4.5, 7.0, 11.0, 21.0⟩ (monoChromeConst 100.0 10.0)
-
-def onPrimaryFixedVariant : ToneFn :=
-  withTwoBackgrounds primaryFixedDim primaryFixed ⟨3.0, 4.5, 7.0, 11.0⟩ (monoChromeConst 90.0 30.0)
+def primaryFixedGroup : ToneFnGroup :=
+  group1 primaryFixedPair
+    ⟨4.5, 7.0, 11.0, 21.0⟩
+    ⟨3.0, 4.5, 7.0, 11.0⟩
+    (monoChromeConst 100.0 10.0)
+    (monoChromeConst 90.0 30.0)
 
 def secondaryFixedBase : ToneFn :=
   withContrast hightestSurface ⟨1.0, 1.0, 3.0, 4.5⟩ (monoChromeConst 80.0 90.0)
@@ -238,19 +200,14 @@ def secondaryFixedBase : ToneFn :=
 def secondaryFixedDimBase : ToneFn :=
   withContrast hightestSurface ⟨1.0, 1.0, 3.0, 4.5⟩ (monoChromeConst 70.0 80.0)
 
-def secondaryFixedPair : ToneFn × ToneFn := pairConbinator 10.0 TonePolarity.lighter true (secondaryFixedBase , secondaryFixedDimBase)
+def secondaryFixedPair : ToneFnPair := pair 10.0 TonePolarity.lighter true secondaryFixedBase secondaryFixedDimBase
 
-def secondaryFixed : ToneFn :=
-  secondaryFixedPair.1
-
-def secondaryFixedDim : ToneFn :=
-  secondaryFixedPair.2
-
-def onSecondaryFixed : ToneFn :=
-  withTwoBackgrounds secondaryFixedDim secondaryFixed ⟨4.5, 7.0, 11.0, 21.0⟩ (constantTone 10.0)
-
-def onSecondaryFixedVariant : ToneFn :=
-  withTwoBackgrounds secondaryFixedDim secondaryFixed ⟨3.0, 4.5, 7.0, 11.0⟩ (monoChromeConst 25.0 30.0)
+def secondaryFixedGroup : ToneFnGroup :=
+  group1 secondaryFixedPair
+    ⟨4.5, 7.0, 11.0, 21.0⟩
+    ⟨3.0, 4.5, 7.0, 11.0⟩
+    (constantTone 10.0)
+    (monoChromeConst 25.0 30.0)
 
 def tertiaryFixedBase : ToneFn :=
   withContrast hightestSurface ⟨1.0, 1.0, 3.0, 4.5⟩ (monoChromeConst 40.0 90.0)
@@ -258,22 +215,17 @@ def tertiaryFixedBase : ToneFn :=
 def tertiaryFixedDimBase : ToneFn :=
   withContrast hightestSurface ⟨1.0, 1.0, 3.0, 4.5⟩ (monoChromeConst 30.0 80.0)
 
-def tertiaryFixedPair : ToneFn × ToneFn := pairConbinator 10.0 TonePolarity.lighter true (tertiaryFixedBase , tertiaryFixedDimBase)
+def tertiaryFixedPair : ToneFnPair := pair 10.0 TonePolarity.lighter true tertiaryFixedBase tertiaryFixedDimBase
 
-def tertiaryFixed : ToneFn :=
-  tertiaryFixedPair.1
+def tertiaryFixedGroup : ToneFnGroup :=
+  group1 tertiaryFixedPair
+    ⟨4.5, 7.0, 11.0, 21.0⟩
+    ⟨3.0, 4.5, 7.0, 11.0⟩
+    (monoChromeConst 100.0 10.0)
+    (monoChromeConst 90.0 30.0)
 
-def tertiaryFixedDim : ToneFn :=
-  tertiaryFixedPair.2
-
-def onTertiaryFixed : ToneFn :=
-  withTwoBackgrounds tertiaryFixedDim tertiaryFixed ⟨4.5, 7.0, 11.0, 21.0⟩ (monoChromeConst 100.0 10.0)
-
-def onTertiaryFixedVariant : ToneFn :=
-  withTwoBackgrounds tertiaryFixedDim tertiaryFixed ⟨3.0, 4.5, 7.0, 11.0⟩ (monoChromeConst 90.0 30.0)
-
-public def allMaterialDynamicColors : List DynamicColor :=
-  [
+public def allMaterialDynamicColors : (List DynamicColor) × (List DynamicColorGroup) :=
+  ([
     ⟨"primaryPaletteKeyColor", primaryPaletteKeyColor, .primary⟩,
     ⟨"secondaryPaletteKeyColor", secondaryPaletteKeyColor, .secondary⟩,
     ⟨"tertiaryPaletteKeyColor", tertiaryPaletteKeyColor, .tertiary⟩,
@@ -299,33 +251,14 @@ public def allMaterialDynamicColors : List DynamicColor :=
     ⟨"shadow", shadow, .neutral⟩,
     ⟨"scrim", scrim, .neutral⟩,
     ⟨"surfaceTint", surfaceTint, .primary⟩,
-    ⟨"primary", primary, .primary⟩,
-    ⟨"primaryContainer", primaryContainer, .primary⟩,
-    ⟨"onPrimary", onPrimary, .primary⟩,
-    ⟨"onPrimaryContainer", onPrimaryContainer, .primary⟩,
     ⟨"inversePrimary", inversePrimary, .primary⟩,
-    ⟨"secondary", secondary, .secondary⟩,
-    ⟨"secondaryContainer", secondaryContainer, .secondary⟩,
-    ⟨"onSecondary", onSecondary, .secondary⟩,
-    ⟨"onSecondaryContainer", onSecondaryContainer, .secondary⟩,
-    ⟨"tertiary", tertiary, .tertiary⟩,
-    ⟨"tertiaryContainer", tertiaryContainer, .tertiary⟩,
-    ⟨"onTertiary", onTertiary, .tertiary⟩,
-    ⟨"onTertiaryContainer", onTertiaryContainer, .tertiary⟩,
-    ⟨"error", error, .error⟩,
-    ⟨"errorContainer", errorContainer, .error⟩,
-    ⟨"onError", onError, .error⟩,
-    ⟨"onErrorContainer", onErrorContainer, .error⟩,
-    ⟨"primaryFixed", primaryFixed, .primary⟩,
-    ⟨"primaryFixedDim", primaryFixedDim, .primary⟩,
-    ⟨"onPrimaryFixed", onPrimaryFixed, .primary⟩,
-    ⟨"onPrimaryFixedVariant", onPrimaryFixedVariant, .primary⟩,
-    ⟨"secondaryFixed", secondaryFixed, .secondary⟩,
-    ⟨"secondaryFixedDim", secondaryFixedDim, .secondary⟩,
-    ⟨"onSecondaryFixed", onSecondaryFixed, .secondary⟩,
-    ⟨"onSecondaryFixedVariant", onSecondaryFixedVariant, .secondary⟩,
-    ⟨"tertiaryFixed", tertiaryFixed, .tertiary⟩,
-    ⟨"tertiaryFixedDim", tertiaryFixedDim, .tertiary⟩,
-    ⟨"onTertiaryFixed", onTertiaryFixed, .tertiary⟩,
-    ⟨"onTertiaryFixedVariant", onTertiaryFixedVariant, .tertiary⟩
-  ]
+  ],
+  [
+    ⟨"primaryContainer", "primary", "onPrimaryContainer", "onPrimary", primaryGroup, .primary⟩,
+    ⟨"secondaryContainer", "secondary", "onSecondaryContainer", "onSecondary", secondaryGroup, .secondary⟩,
+    ⟨"tertiaryContainer", "tertiary", "onTertiaryContainer", "onTertiary", tertiaryGroup, .tertiary⟩,
+    ⟨"errorContainer", "error", "onErrorContainer", "onError", errorGroup, .error⟩,
+    ⟨"primaryFixed", "primaryFixedDim", "onPrimaryFixed", "onPrimaryFixedVariant", primaryFixedGroup, .primary⟩,
+    ⟨"secondaryFixed", "secondaryFixedDim", "onSecondaryFixed", "onSecondaryFixedVariant", secondaryFixedGroup, .secondary⟩,
+    ⟨"tertiaryFixed", "tertiaryFixedDim", "onTertiaryFixed", "onTertiaryFixedVariant", tertiaryFixedGroup, .tertiary⟩
+  ])

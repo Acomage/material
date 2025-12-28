@@ -28,7 +28,19 @@ inductive Palette
 
 abbrev ToneFn := DynamicScheme → Float
 
+abbrev ToneFnPair := DynamicScheme → Vector Float 2
+
+abbrev ToneFnGroup := DynamicScheme → Vector Float 4
+
 structure DynamicColor where
   name : String
   toneFn : ToneFn
+  palette : Palette
+
+structure DynamicColorGroup where
+  nameA : String
+  nameB : String
+  nameC : String
+  nameD : String
+  toneFnGroup : ToneFnGroup
   palette : Palette

@@ -13,9 +13,6 @@ def isDisliked (hct : Hct) : Bool :=
   huePasses && chromaPasses && tonePasses
 
 public def fixIfDisliked (hct : Hct) : Hct :=
-  if isDisliked hct then
-    fromHct hct.hue hct.chroma 70.0
-  else
-    hct
+  if isDisliked hct then fromHct hct.hue hct.chroma 70.0 else hct
 
 end DislikeAnalyzer

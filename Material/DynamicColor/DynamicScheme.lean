@@ -28,11 +28,20 @@ def getRotatedHue (sourceColor : Hct) (hues : Vector Float 9) (rotations : Vecto
   return sourceHue
 
 def showAllColors (s : DynamicScheme) : String :=
-  let colors := allMaterialDynamicColors
+  let (colors, colorGroups) := allMaterialDynamicColors
   let colorStrs := colors.map (fun dc =>
     let argb := getArgb dc s
     s!"{dc.name}: Color {StringUtils.hexFromArgb argb}"
   )
-  String.intercalate "\n" colorStrs
+  let colorGroupStrs := colorGroups.flatMap (fun dcg =>
+    let argb := getArgbGroup dcg s
+    [
+      s!"{dcg.nameA}: Color {StringUtils.hexFromArgb argb[0]}",
+      s!"{dcg.nameB}: Color {StringUtils.hexFromArgb argb[1]}",
+      s!"{dcg.nameC}: Color {StringUtils.hexFromArgb argb[2]}",
+      s!"{dcg.nameD}: Color {StringUtils.hexFromArgb argb[3]}"
+    ]
+  )
+  String.intercalate "\n" (colorStrs ++ colorGroupStrs)
 
 end DynamicScheme
