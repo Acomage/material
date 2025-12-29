@@ -5,6 +5,8 @@ public import Material.Contrast.Contrast
 public import Material.DynamicColor.ContrastCurve
 public import Material.Utils.MathUtils
 
+public import Material.Hct.MaxChroma
+
 -- some helpers
 
 open Contrast MathUtils
@@ -34,31 +36,34 @@ public def foregroundTone (bgTone ratio : Float) : Float :=
   else
     if darkerRatio >= ratio || darkerRatio >= lighterRatio then darkerTone else lighterTone
 
--- maybe can be speeded up with binary search?
--- maybe cache results?
--- or just precompute a table?
--- TODO: review this function for performance
-public def findDesiredChromaByTone (hue chroma tone : Float) (by_decreasing_tone : Bool) : Float := Id.run do
+public def findDesiredChromaByTone (hue chroma startTone : Float) (by_decreasing_tone : Bool) : Float := Id.run do
+  let index := (hue * 2).round.toUInt32.toNat
   let maxChromaFn := HctSolver.maxChroma hue
-  let epsilon := 0.4
-  let mut answer := tone
-  let mut closest_to_chroma := maxChromaFn tone
-  let step := if by_decreasing_tone then -1.0 else 1.0
-  if closest_to_chroma < chroma then
-    let mut chroma_peak := closest_to_chroma
-    while closest_to_chroma < chroma do
-      answer := answer + step
-      let potential_solution := maxChromaFn answer
-      if chroma_peak > potential_solution then
-        break
-      if potential_solution > chroma - epsilon then
-        break
-      let potential_delta := (potential_solution - chroma).abs
-      let current_delta := (closest_to_chroma - chroma).abs
-      if potential_delta < current_delta then
-        closest_to_chroma := potential_solution
-      chroma_peak := max chroma_peak potential_solution
-  return answer
+  let (peakTone, peakChroma) := maxChromaPeak[index]!
+  if peakChroma < chroma then return peakTone
+  let isMovingTowardsPeak :=
+    if by_decreasing_tone then peakTone < startTone else peakTone > startTone
+  if !isMovingTowardsPeak || startTone == peakTone then return peakTone
+  let mut p0 := startTone
+  let mut p1 := peakTone
+  let mut y0 := (maxChromaFn p0) - chroma
+  let mut y1 := peakChroma - chroma
+  if y0 >= 0.0 then return startTone
+  let epsilon := 0.1
+  let mut iterations := 0
+  while (p1 - p0).abs > epsilon && iterations < 20 do
+    iterations := iterations + 1
+    let mut mid := p0 - y0 * (p1 - p0) / (y1 - y0)
+    if mid <= p0 + 0.005 || mid >= p1 - 0.005 then
+      mid := (p0 + p1) / 2.0
+    let y_mid := (maxChromaFn mid) - chroma
+    if y_mid < 0.0 then
+      p0 := mid
+      y0 := y_mid
+    else
+      p1 := mid
+      y1 := y_mid
+  p1
 
 -- combinator.
 

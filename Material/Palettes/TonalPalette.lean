@@ -2,8 +2,10 @@ module
 public import Material.Hct.Hct
 public import Material.Hct.HctSolver
 public import Material.Utils.ColorUtils
+public import Material.Hct.MaxChroma
+public import Material.Utils.MathUtils
 
-open ColorUtils
+open ColorUtils MathUtils
 
 -- TODO:find some way to implement caching
 
@@ -43,31 +45,34 @@ structure KeyColor where
 namespace KeyColor
 
 def create (keyColor : KeyColor) : Hct := Id.run do
-  let pivotTone := 50
-  let toneStepSize := 1
-  let epsilon := 0.01
+  let pivotTone := 50.0
   let hue := keyColor.hue
   let requestedChroma := keyColor.requestedChroma
-  let maxChromaFn := fun tone : Int32 => HctSolver.maxChroma hue tone.toFloat
-  let mut lowerTone : Int32 := 0
-  let mut upperTone : Int32 := 100
-  while lowerTone < upperTone do
-    let midTone := (lowerTone + upperTone) / 2
-    let sufficientChroma := maxChromaFn midTone >= requestedChroma - epsilon
-    if sufficientChroma then
-      if (lowerTone - pivotTone).abs < (upperTone - pivotTone).abs then
-        upperTone := midTone
-      else if lowerTone == midTone then
-        return Hct.fromHct hue requestedChroma lowerTone.toFloat
-      else
-        lowerTone := midTone
+  let index := (hue * 2).round.toUInt32.toNat
+  let maxChromaFn := HctSolver.maxChroma hue
+  let (peakTone, peakChroma) := maxChromaPeak[index]!
+  if peakChroma <= requestedChroma then
+    return Hct.fromHct hue requestedChroma peakTone
+  let mut y0 := (maxChromaFn pivotTone) - requestedChroma
+  let mut p0 := pivotTone
+  let mut p1 := peakTone
+  let mut y1 := peakChroma - requestedChroma
+  if y0 >= 0 then return Hct.fromHct hue requestedChroma pivotTone
+  let epsilon := 0.1
+  let mut iterations := 0
+  while (p1 - p0).abs > epsilon && iterations < 20 do
+    iterations := iterations + 1
+    let mut mid := p0 - y0 * (p1 - p0) / (y1 - y0)
+    if mid <= p0 + 0.005 || mid >= p1 - 0.005 then
+      mid := (p0 + p1) / 2.0
+    let y_mid := (maxChromaFn mid) - requestedChroma
+    if y_mid < 0.0 then
+      p0 := mid
+      y0 := y_mid
     else
-      let isAscending := maxChromaFn midTone < maxChromaFn (midTone + toneStepSize)
-      if isAscending then
-        lowerTone := midTone + toneStepSize
-      else
-        upperTone := midTone
-  return Hct.fromHct hue requestedChroma lowerTone.toFloat
+      p1 := mid
+      y1 := y_mid
+  return Hct.fromHct hue requestedChroma p1
 
 end KeyColor
 
@@ -75,6 +80,7 @@ public def fromHct (hct : Hct) : TonalPalette :=
   ⟨hct.hue, hct.chroma, hct⟩
 
 public def fromHueAndChroma (hue chroma : Float) : TonalPalette :=
+  let hue := sanitizeDegreesDouble hue
   let keyColor := KeyColor.create ⟨hue, chroma⟩
   ⟨hue, chroma, keyColor⟩
 
