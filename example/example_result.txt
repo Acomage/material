@@ -37,9 +37,9 @@ primaryContainer: Color #2660ce
 primary: Color #0047ad
 onPrimaryContainer: Color #dce3fe
 onPrimary: Color #fefefe
-secondaryContainer: Color #bdcdfe
+secondaryContainer: Color #bccdfe
 secondary: Color #4c5d88
-onSecondaryContainer: Color #465681
+onSecondaryContainer: Color #465680
 onSecondary: Color #fefefe
 tertiaryContainer: Color #9442aa
 tertiary: Color #78268f
@@ -261,9 +261,9 @@ primaryContainer: Color #2660ce
 primary: Color #0047ad
 onPrimaryContainer: Color #dce3fe
 onPrimary: Color #fefefe
-secondaryContainer: Color #bdcdfe
+secondaryContainer: Color #bccdfe
 secondary: Color #4c5d88
-onSecondaryContainer: Color #465681
+onSecondaryContainer: Color #465680
 onSecondary: Color #fefefe
 tertiaryContainer: Color #aa4800
 tertiary: Color #833600
@@ -343,7 +343,7 @@ onTertiaryFixed: Color #331000
 onTertiaryFixedVariant: Color #783100
 
 Scheme FruitSalad Light:
-primaryPaletteKeyColor: Color #04a9c9
+primaryPaletteKeyColor: Color #00a8c7
 secondaryPaletteKeyColor: Color #2d8095
 tertiaryPaletteKeyColor: Color #6075ab
 neutralPaletteKeyColor: Color #737581
@@ -399,7 +399,7 @@ onTertiaryFixed: Color #001846
 onTertiaryFixedVariant: Color #2f4578
 
 Scheme FruitSalad Dark:
-primaryPaletteKeyColor: Color #04a9c9
+primaryPaletteKeyColor: Color #00a8c7
 secondaryPaletteKeyColor: Color #2d8095
 tertiaryPaletteKeyColor: Color #6075ab
 neutralPaletteKeyColor: Color #737581
@@ -903,7 +903,7 @@ onTertiaryFixed: Color #2a122b
 onTertiaryFixedVariant: Color #593d59
 
 Scheme Vibrant Light:
-primaryPaletteKeyColor: Color #036cfe
+primaryPaletteKeyColor: Color #006bfe
 secondaryPaletteKeyColor: Color #727396
 tertiaryPaletteKeyColor: Color #7c6ea1
 neutralPaletteKeyColor: Color #737581
@@ -959,7 +959,7 @@ onTertiaryFixed: Color #201240
 onTertiaryFixedVariant: Color #4c3e6e
 
 Scheme Vibrant Dark:
-primaryPaletteKeyColor: Color #036cfe
+primaryPaletteKeyColor: Color #006bfe
 secondaryPaletteKeyColor: Color #727396
 tertiaryPaletteKeyColor: Color #7c6ea1
 neutralPaletteKeyColor: Color #737581
