@@ -24,7 +24,6 @@ def background : ToneFn :=
   darkLightConst 6.0 98.0
 
 def onBackground : ToneFn :=
-  /- onOther ⟨3.0, 3.0, 4.5, 7.0⟩ (darkLightConst 90.0 10.0) background -/
   withContrast background ⟨3.0, 3.0, 4.5, 7.0⟩ (darkLightConst 90.0 10.0)
 
 def surface : ToneFn :=

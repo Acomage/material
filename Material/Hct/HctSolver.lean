@@ -116,7 +116,6 @@ def bisectToLimit (y targetHue : Float) : Vec3 :=
   let t := loop 0.0 1.0 8
   f t
 
-
 def linrgbOfJ (hueRadians chroma : Float) : Float → Vec3 :=
   let viewingConditions := DEFAULT
   let tInnerCoeff := 1 / (1.64 - 0.29 ^ (viewingConditions.n)) ^ 0.73
