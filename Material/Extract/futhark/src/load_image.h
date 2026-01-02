@@ -5,6 +5,8 @@
 #include <string.h>
 #include <turbojpeg.h>
 
+#define TARGET_PIXELS 16384
+
 // 计算采样步长：确保采样数 >= target_pixels 且尽可能接近
 static int calculate_step(int total_pixels, int target_pixels) {
   if (target_pixels >= total_pixels)
@@ -21,36 +23,36 @@ static int calculate_sampled_count(int total_pixels, int step) {
   return (total_pixels + step - 1) / step;
 }
 
-unsigned char *load_png_subsample(const char *filename, int target_pixels,
-                                  int *out_count) {
+int load_png_subsample(unsigned char out[], const char *filename,
+                       int *out_count) {
   FILE *fp = fopen(filename, "rb");
   if (!fp)
-    return NULL;
+    return 1;
 
   png_byte header[8];
   if (fread(header, 1, 8, fp) != 8 || png_sig_cmp(header, 0, 8)) {
     fclose(fp);
-    return NULL;
+    return 1;
   }
 
   png_structp png_ptr =
       png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   if (!png_ptr) {
     fclose(fp);
-    return NULL;
+    return 1;
   }
 
   png_infop info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr) {
     png_destroy_read_struct(&png_ptr, NULL, NULL);
     fclose(fp);
-    return NULL;
+    return 1;
   }
 
   if (setjmp(png_jmpbuf(png_ptr))) {
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     fclose(fp);
-    return NULL;
+    return 1;
   }
 
   png_init_io(png_ptr, fp);
@@ -84,21 +86,21 @@ unsigned char *load_png_subsample(const char *filename, int target_pixels,
   if (!row) {
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     fclose(fp);
-    return NULL;
+    return 1;
   }
 
   // 计算采样步长（将图像视为一维像素流）
   int total_pixels = width * height;
-  int step = calculate_step(total_pixels, target_pixels);
+  int step = calculate_step(total_pixels, TARGET_PIXELS);
   int sampled_count = calculate_sampled_count(total_pixels, step);
 
-  unsigned char *out = malloc(sampled_count * 3);
-  if (!out) {
-    free(row);
-    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-    fclose(fp);
-    return NULL;
-  }
+  // unsigned char *out = malloc(sampled_count * 3);
+  // if (!out) {
+  //   free(row);
+  //   png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+  //   fclose(fp);
+  //   return NULL;
+  // }
 
   int pixel_index = 0; // 当前像素的一维索引
   int next_sample = 0; // 下一个要采样的像素索引
@@ -125,14 +127,15 @@ unsigned char *load_png_subsample(const char *filename, int target_pixels,
   fclose(fp);
 
   *out_count = out_pos / 3;
-  return out;
+  // return out;
+  return 0;
 }
 
-unsigned char *load_jpeg_subsample(const char *filename, int target_pixels,
-                                   int *out_count) {
+int load_jpeg_subsample(unsigned char out[], const char *filename,
+                        int *out_count) {
   FILE *fp = fopen(filename, "rb");
   if (!fp)
-    return NULL;
+    return 1;
 
   fseek(fp, 0, SEEK_END);
   long size = ftell(fp);
@@ -141,7 +144,7 @@ unsigned char *load_jpeg_subsample(const char *filename, int target_pixels,
   unsigned char *buf = malloc(size);
   if (!buf) {
     fclose(fp);
-    return NULL;
+    return 1;
   }
   fread(buf, 1, size, fp);
   fclose(fp);
@@ -149,7 +152,7 @@ unsigned char *load_jpeg_subsample(const char *filename, int target_pixels,
   tjhandle tj = tjInitDecompress();
   if (!tj) {
     free(buf);
-    return NULL;
+    return 1;
   }
 
   int width, height, subsamp, colorspace;
@@ -157,11 +160,11 @@ unsigned char *load_jpeg_subsample(const char *filename, int target_pixels,
                           &colorspace) < 0) {
     free(buf);
     tjDestroy(tj);
-    return NULL;
+    return 1;
   }
 
   int total_pixels = width * height;
-  int step = calculate_step(total_pixels, target_pixels);
+  int step = calculate_step(total_pixels, TARGET_PIXELS);
 
   // 选择最接近的缩放因子，使解码后像素数 >= 采样所需
   int nsf = 0;
@@ -176,10 +179,10 @@ unsigned char *load_jpeg_subsample(const char *filename, int target_pixels,
     int decoded_pixels = sw * sh;
 
     // 解码后像素数必须足够进行采样
-    int decoded_step = calculate_step(decoded_pixels, target_pixels);
+    int decoded_step = calculate_step(decoded_pixels, TARGET_PIXELS);
     int sampled = calculate_sampled_count(decoded_pixels, decoded_step);
 
-    if (sampled >= target_pixels && decoded_pixels < best_decoded_pixels) {
+    if (sampled >= TARGET_PIXELS && decoded_pixels < best_decoded_pixels) {
       best_decoded_pixels = decoded_pixels;
       best_num = sfs[i].num;
       best_den = sfs[i].denom;
@@ -194,7 +197,7 @@ unsigned char *load_jpeg_subsample(const char *filename, int target_pixels,
   if (!rgb) {
     free(buf);
     tjDestroy(tj);
-    return NULL;
+    return 1;
   }
 
   if (tjDecompress2(tj, buf, size, rgb, dec_w, 0, dec_h, TJPF_RGB,
@@ -202,21 +205,21 @@ unsigned char *load_jpeg_subsample(const char *filename, int target_pixels,
     free(rgb);
     free(buf);
     tjDestroy(tj);
-    return NULL;
+    return 1;
   }
 
   free(buf);
   tjDestroy(tj);
 
   // 从解码后的图像中均匀采样
-  int sample_step = calculate_step(decoded_pixels, target_pixels);
+  int sample_step = calculate_step(decoded_pixels, TARGET_PIXELS);
   int sampled_count = calculate_sampled_count(decoded_pixels, sample_step);
 
-  unsigned char *out = malloc(sampled_count * 3);
-  if (!out) {
-    free(rgb);
-    return NULL;
-  }
+  // unsigned char *out = malloc(sampled_count * 3);
+  // if (!out) {
+  //   free(rgb);
+  //   return NULL;
+  // }
 
   int out_pos = 0;
   for (int i = 0; i < decoded_pixels; i += sample_step) {
@@ -228,21 +231,22 @@ unsigned char *load_jpeg_subsample(const char *filename, int target_pixels,
   free(rgb);
 
   *out_count = out_pos / 3;
-  return out;
+  // return out;
+  return 0;
 }
 
-unsigned char *load_image_subsample(const char *filename, int target_pixels,
-                                    int *out_count) {
+int load_image_subsample(unsigned char rgb[], const char *filename,
+                         int *out_count) {
   const char *ext = strrchr(filename, '.');
   if (!ext)
-    return NULL;
+    return 1;
   ext++;
 
   if (!strcasecmp(ext, "png"))
-    return load_png_subsample(filename, target_pixels, out_count);
+    return load_png_subsample(rgb, filename, out_count);
 
   if (!strcasecmp(ext, "jpg") || !strcasecmp(ext, "jpeg"))
-    return load_jpeg_subsample(filename, target_pixels, out_count);
+    return load_jpeg_subsample(rgb, filename, out_count);
 
-  return NULL;
+  return 1;
 }

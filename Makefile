@@ -11,7 +11,7 @@ build:
 	LEAN_CC=$(LEAN_CC) lake build -v
 
 clean:
-	rm -rf $(LEAN_BUILD_DIR)/*
+	lake clean
 	rm -rf $(FUTHARK_BUILD_DIR)/*
 
 rebuild: clean build

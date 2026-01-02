@@ -63,8 +63,18 @@ LEAN_EXPORT lean_obj_res lean_extract_colors(b_lean_obj_arg path_obj,
 
   // Load image
   int pixels_num;
-  unsigned char *rgb = load_image_subsample(path, 16384, &pixels_num);
-  if (!rgb) {
+  // unsigned char *rgb = load_image_subsample(path, &pixels_num);
+  unsigned char rgb[60000];
+  int rescode = load_image_subsample(rgb, path, &pixels_num);
+  // if (!rgb) {
+  //   // Return empty array with count 0 on failure
+  //   lean_obj_res arr = lean_alloc_array(0, 0);
+  //   lean_obj_res result = lean_alloc_ctor(0, 2, 0);
+  //   lean_ctor_set(result, 0, arr);
+  //   lean_ctor_set(result, 1, lean_box_uint32(0));
+  //   return result;
+  // }
+  if (rescode) {
     // Return empty array with count 0 on failure
     lean_obj_res arr = lean_alloc_array(0, 0);
     lean_obj_res result = lean_alloc_ctor(0, 2, 0);
@@ -95,7 +105,7 @@ LEAN_EXPORT lean_obj_res lean_extract_colors(b_lean_obj_arg path_obj,
     futhark_free_u8_2d(ctx, in1);
     futhark_context_free(ctx);
     futhark_context_config_free(cfg);
-    free(rgb);
+    // free(rgb);
 
     lean_obj_res arr = lean_alloc_array(0, 0);
     lean_obj_res result = lean_alloc_ctor(0, 2, 0);
@@ -129,7 +139,7 @@ LEAN_EXPORT lean_obj_res lean_extract_colors(b_lean_obj_arg path_obj,
   futhark_free_u8_2d(ctx, in1);
   futhark_context_free(ctx);
   futhark_context_config_free(cfg);
-  free(rgb);
+  // free(rgb);
 
   // Return tuple (Array UInt32, UInt32)
   lean_obj_res result = lean_alloc_ctor(0, 2, 0);
