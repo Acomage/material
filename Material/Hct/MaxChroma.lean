@@ -1,5 +1,5 @@
 module
-public import Material.Hct.HctSolver
+/- public import Material.Hct.HctSolver -/
 
 def findPeak (fn : Float → Float) : (Float × Float) := Id.run do
   let mut a := 0.5

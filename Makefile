@@ -7,11 +7,14 @@ LEAN_BUILD_DIR := .lake/build
 
 all: build
 
-build:
+$(FUTHARK_BUILD_DIR)/libcolor_extract.a:
+	cd Material/Extract/futhark && cmake -S . -B ./build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ && cmake --build ./build
+
+build:$(FUTHARK_BUILD_DIR)/libcolor_extract.a
 	LEAN_CC=$(LEAN_CC) lake build -v
 
 clean:
-	rm -rf $(LEAN_BUILD_DIR)/*
+	lake clean
 	rm -rf $(FUTHARK_BUILD_DIR)/*
 
 rebuild: clean build
