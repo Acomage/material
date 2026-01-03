@@ -62,7 +62,7 @@ LEAN_EXPORT lean_obj_res lean_extract_colors(b_lean_obj_arg path_obj,
     desired_count = 1;
 
   // Load image
-  int pixels_num;
+  uint32_t pixels_num;
   // unsigned char *rgb = load_image_subsample(path, &pixels_num);
   unsigned char rgb[60000];
   int rescode = load_image_subsample(rgb, path, &pixels_num);
