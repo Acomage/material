@@ -1,5 +1,5 @@
 perf*
-blend2d
+Material/Extract/futhark/src/blend2d
 /.lake
 /google
 /test
