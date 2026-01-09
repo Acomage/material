@@ -82,7 +82,7 @@ pub fn fromInt(argb: u32) Cam16 {
     const eHue = @cos(huePrime) + 3.8;
     const p1 = eHue * p1k;
     const t = p1 * hypot(a, b) / (u + 0.305);
-    const jdiv100 = pow(ac, cz);
+    const jdiv100 = pow(f32, ac, cz);
     const alpha = alphak * pow(f32, t, 0.9);
     const chroma = alpha * @sqrt(jdiv100);
     return Cam16{
