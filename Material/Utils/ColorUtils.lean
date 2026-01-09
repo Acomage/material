@@ -17,14 +17,14 @@ namespace ColorUtils
 
 public def WHITE_POINT_D65 := #v[95.047, 100.0, 108.883]
 
-public def linearized (rgbComponent : Float) : Float :=
-  let normalized := rgbComponent / 255.0
+def linearized (rgbComponent : UInt32) : Float :=
+  let normalized := rgbComponent.toFloat / 255.0
   if normalized <= 0.040449936 then
     normalized / 12.92 * 100.0
   else
     (((normalized + 0.055) / 1.055).pow 2.4) * 100.0
 
-public def trueDelinearized (rgbComponent : Float) : Float :=
+def trueDelinearized (rgbComponent : Float) : Float :=
   let normalized := rgbComponent / 100.0
   let delinearized :=
     if normalized <= 0.0031308 then
@@ -82,7 +82,7 @@ public def xyzFromArgb (argb : UInt32) : MathUtils.Vec3 :=
   let r := redFromArgb argb
   let g := greenFromArgb argb
   let b := blueFromArgb argb
-  #v[r, g, b].map (linearized ∘ (UInt32.toFloat)) * SRGB_TO_XYZ
+  #v[r, g, b].map linearized * SRGB_TO_XYZ
 
 public def labFromArgb (argb : UInt32) : MathUtils.Vec3 :=
   let xyz := xyzFromArgb argb

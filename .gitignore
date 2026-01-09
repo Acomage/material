@@ -5,7 +5,7 @@ Material/Extract/futhark/src/blend2d
 /test
 compile_commands.json
 plan.txt
-/.cache
+.cache
 build
 lib
 res*.txt
@@ -14,3 +14,5 @@ test.*
 pyproject.toml
 uv.lock
 .venv
+zig-out
+.zig-cache
