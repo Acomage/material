@@ -5,6 +5,7 @@ test {
         // @import("Utils/ColorUtils.zig"),
         // @import("Hct/ViewingConditions.zig"),
         // @import("Hct/HctSolver.zig"),
-        @import("Hct/MaxChroma.zig"),
+        // @import("Hct/MaxChroma.zig"),
+        @import("Temperature/TemperatureCache.zig"),
     };
 }
