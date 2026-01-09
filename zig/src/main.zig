@@ -1,8 +1,8 @@
 const std = @import("std");
-
-const l = @import("Extract/load_image.zig");
-
-const e = @import("Extract/extract.zig");
+const load_image_mod = @import("Extract/load_image.zig");
+const extract_mod = @import("Extract/extract.zig");
+const loadImageSubsample = load_image_mod.loadImageSubsample;
+const extract = extract_mod.extract;
 
 const io = std.Options.debug_io;
 
@@ -19,8 +19,8 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
-    const out_count = try l.loadImageSubsample(allocator, &rgb, image_path);
-    const extracted_colors = e.extract(128, rgb[0 .. out_count * 3], 4);
+    const out_count = try loadImageSubsample(allocator, &rgb, image_path);
+    const extracted_colors = extract(128, rgb[0 .. out_count * 3], 4);
     for (extracted_colors) |color| {
         try stdout.print("Color: {x}\n", .{color});
     }

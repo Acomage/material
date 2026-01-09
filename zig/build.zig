@@ -3,7 +3,26 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    //Generate LUT
+    const gen_exe = b.createModule(.{
+        .root_source_file = b.path("src/MaxChromaGen.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
 
+    gen_exe.addIncludePath(b.path("src"));
+
+    const gen = b.addExecutable(.{
+        .name = "gen-maxchroma",
+        .root_module = gen_exe,
+    });
+    b.installArtifact(gen);
+
+    const run_gen_cmd = b.addRunArtifact(gen);
+    run_gen_cmd.addArg("./src/Hct/MaxChroma.zig");
+    run_gen_cmd.step.dependOn(b.getInstallStep());
+
+    // build CLI
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
         .target = target,
@@ -21,6 +40,8 @@ pub fn build(b: *std.Build) void {
         .name = "main",
         .root_module = exe_mod,
     });
+
+    exe.step.dependOn(&run_gen_cmd.step);
 
     b.installArtifact(exe);
 
