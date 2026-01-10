@@ -6,6 +6,7 @@ const mathUtils_mod = @import("../Utils/MathUtils.zig");
 const Hct = hct_mod.Hct;
 const maxChroma = hctSolver_mod.maxChroma;
 const maxChromaPeak = maxChroma_mod.maxChromaPeak;
+const solveToInt = hctSolver_mod.solveToInt;
 
 const KeyColor = struct {
     hue: f32,
@@ -53,6 +54,9 @@ pub const TonalPalette = struct {
     hue: f32,
     chroma: f32,
     keyColor: Hct,
+    pub fn getArgb(self: TonalPalette, tone: f32) u32 {
+        return solveToInt(self.hue, self.chroma, tone);
+    }
 };
 
 pub fn fromHct(hct: Hct) TonalPalette {
