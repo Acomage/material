@@ -9,8 +9,10 @@ const DynamicScheme = types_mod.DynamicScheme;
 const allMaterialDynamicColors = materialDynamicColor_mod.allMaterialDynamicColors;
 const hexFromArgb = stringUtils_mod.hexFromArgb;
 const getArgb = dynamicColor_mod.getArgb;
+const Writer = std.Io.Writer;
 
-const io = std.Options.debug_io;
+// var threaded: std.Io.Threaded = .init_single_threaded;
+// const io = threaded.io();
 
 pub fn getRotatedHue(sourceColor: Hct, hues: [9]f32, rotations: [9]f32) f32 {
     const sourceHue = sourceColor.hue;
@@ -24,12 +26,13 @@ pub fn getRotatedHue(sourceColor: Hct, hues: [9]f32, rotations: [9]f32) f32 {
     return sourceHue;
 }
 
-pub fn showAllColors(s: DynamicScheme) !void {
-    var stdout_writer = std.Io.File.stdout().writer(io, &.{});
-    const stdout = &stdout_writer.interface;
+pub fn showAllColors(file: *Writer, s: DynamicScheme) !void {
+    // var stdout_writer = std.Io.File.stdout().writer(io, &.{});
+    // const stdout = &stdout_writer.interface;
     inline for (allMaterialDynamicColors) |materialColor| {
         const colorValue = getArgb(materialColor, s);
         const colorHex = hexFromArgb(colorValue);
-        try stdout.print("{s}: {s}\n", .{ materialColor.name, colorHex });
+        try file.print("{s}: Color {s}\n", .{ materialColor.name, colorHex });
+        // try file.flush();
     }
 }

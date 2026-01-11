@@ -63,25 +63,19 @@ const y4 = y0 + y3;
 const y5 = y1 + y3;
 
 fn chromaticAdaptation(component: f32) f32 {
-    const af = pow(f32, @abs(component), 0.42);
-    return sign(component) * 400.0 * af / (af + 27.13);
+    const af = pow(f32, component, 0.42);
+    return 400.0 * af / (af + 27.13);
 }
 
 // TODO: maybe speed this up by LUT?
 // TODO: check it after profiling.
 fn chromaticAdaptationV(scaled: Vec3) Vec3 {
-    const scaledAbs = @abs(scaled);
     const af = Vec3{
-        pow(f32, scaledAbs[0], 0.42),
-        pow(f32, scaledAbs[1], 0.42),
-        pow(f32, scaledAbs[2], 0.42),
+        pow(f32, scaled[0], 0.42),
+        pow(f32, scaled[1], 0.42),
+        pow(f32, scaled[2], 0.42),
     };
-    const signOfScaled = Vec3{
-        sign(scaled[0]),
-        sign(scaled[1]),
-        sign(scaled[2]),
-    };
-    return signOfScaled * @as(Vec3, @splat(400.0)) * af / (af + @as(Vec3, @splat(27.13)));
+    return @as(Vec3, @splat(400.0)) * af / (af + @as(Vec3, @splat(27.13)));
 }
 
 fn inverseChromaticAdaptation(adapted: f32) f32 {
@@ -262,7 +256,7 @@ fn findResultByJ(hueRadians: f32, chroma: f32, y: f32) u32 {
 }
 
 pub fn solveToInt(hueDegrees: f32, chroma: f32, lstar: f32) u32 {
-    if (chroma < 0.0001 or lstar < 0.0001 or lstar >= lstarSingular) {
+    if (chroma < 0.0001 or lstar < 0.0001 or lstar >= lstarSingular - 0.0001) {
         return argbFromLstar(lstar);
     }
     const hueRadians = degreesToRadians(@mod(hueDegrees, 360.0));
@@ -298,13 +292,92 @@ pub fn maxChroma(hue: f32, tone: f32) f32 {
     return chroma;
 }
 
-test solveToInt {
-    const print = std.debug.print;
-    const stringUtils_mod = @import("../Utils/StringUtils.zig");
-    const hexFromArgb = stringUtils_mod.hexFromArgb;
-    print("{s}\n", .{hexFromArgb(solveToInt(250.0, 50.0, 60.0))});
-    print("{s}\n", .{hexFromArgb(solveToInt(135.4, 153.6, 20.1))});
-    print("{s}\n", .{hexFromArgb(solveToInt(145.0, 45.1, 45.8))});
-    print("{s}\n", .{hexFromArgb(solveToInt(176.5, 53.0, 25.7))});
-    print("{s}\n", .{hexFromArgb(solveToInt(426.5, 71.3, 46.1))});
+// test solveToInt {
+//     const print = std.debug.print;
+//     const stringUtils_mod = @import("../Utils/StringUtils.zig");
+//     const hexFromArgb = stringUtils_mod.hexFromArgb;
+//     print("{s}\n", .{hexFromArgb(solveToInt(250.0, 50.0, 60.0))});
+//     print("{s}\n", .{hexFromArgb(solveToInt(135.4, 153.6, 20.1))});
+//     print("{s}\n", .{hexFromArgb(solveToInt(145.0, 45.1, 45.8))});
+//     print("{s}\n", .{hexFromArgb(solveToInt(176.5, 53.0, 25.7))});
+//     print("{s}\n", .{hexFromArgb(solveToInt(426.5, 71.3, 46.1))});
+// }
+
+fn rOf(linrgb: Vec3) f32 {
+    const scaled = mul(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
+    const rgbA = chromaticAdaptationV(scaled);
+    const a = dot(aVec, rgbA);
+    const b = dot(bVec, rgbA);
+    return a * a + b * b;
 }
+
+fn rMinOnEdge(p1: Vec3, p2: Vec3, edgeSampleNum: comptime_int) f32 {
+    const step = 1.0 / @as(comptime_float, @floatFromInt(edgeSampleNum - 1));
+    var t: f32 = 0.0;
+    var point = p1;
+    var rMin = rOf(point);
+    for (1..edgeSampleNum) |_| {
+        t += step;
+        point = p1 * @as(Vec3, @splat(1.0 - t)) + p2 * @as(Vec3, @splat(t));
+        const r = rOf(point);
+        if (r < rMin) {
+            rMin = r;
+        }
+    }
+    return rMin;
+}
+
+inline fn rMinOnBoundary(
+    y: f32,
+    comptime indices: []const usize,
+    egdeSampleNum: comptime_int,
+) f32 {
+    const vlist = nthVertexArray(y, indices);
+    var rMin = rMinOnEdge(vlist[indices.len - 1], vlist[0], egdeSampleNum);
+    for (0..indices.len - 1) |i| {
+        const r = rMinOnEdge(vlist[i], vlist[i + 1], egdeSampleNum);
+        if (r < rMin) {
+            rMin = r;
+        }
+    }
+    return rMin;
+}
+
+fn rMinForY(y: f32, edgeSampleNum: comptime_int) f32 {
+    inline for (segments) |seg| {
+        if (y < seg.y_max) {
+            return rMinOnBoundary(y, seg.indices, edgeSampleNum);
+        }
+    }
+    return rMinOnBoundary(y, &.{ 3, 7, 11 }, edgeSampleNum);
+}
+
+pub fn precomputeRMin() f32 {
+    const epsilon = 5;
+    const lstarSampleNum = 4096;
+    const edgeSampleNum = 1024;
+    const minY = epsilon;
+    const maxY = dot(greyAxis, Y_FROM_LINRGB) - epsilon;
+    const step = (maxY - minY) / @as(comptime_float, @floatFromInt(lstarSampleNum - 1));
+    var y: f32 = minY;
+    var rMin = rMinForY(y, edgeSampleNum);
+    for (1..lstarSampleNum) |_| {
+        y += step;
+        const r = rMinForY(y, edgeSampleNum);
+        if (r < rMin) {
+            rMin = r;
+        }
+    }
+    return rMin;
+}
+
+// test "hello" {
+//     const print = std.debug.print;
+//     const epsilon = 2;
+//     const minLstar = epsilon;
+//     const maxLstar = lstarSingular - epsilon;
+//     const minY = yFromLstar(minLstar);
+//     const maxY = yFromLstar(maxLstar);
+//     print("min y: {d}", .{minY});
+//     print("max y: {d}", .{maxY});
+// }

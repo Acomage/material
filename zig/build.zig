@@ -20,7 +20,21 @@ pub fn build(b: *std.Build) void {
 
     const run_gen_cmd = b.addRunArtifact(gen);
     run_gen_cmd.addArg("./src/Hct/MaxChroma.zig");
-    // run_gen_cmd.step.dependOn(b.getInstallStep());
+
+    // precomputeRMin
+    const rmin_exe = b.createModule(.{
+        .root_source_file = b.path("src/rMinGen.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    rmin_exe.addIncludePath(b.path("src"));
+
+    const rmin = b.addExecutable(.{
+        .name = "gen-rmin",
+        .root_module = rmin_exe,
+    });
+    b.installArtifact(rmin);
 
     // build CLI
     const exe_mod = b.createModule(.{
