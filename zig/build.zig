@@ -20,7 +20,7 @@ pub fn build(b: *std.Build) void {
 
     const run_gen_cmd = b.addRunArtifact(gen);
     run_gen_cmd.addArg("./src/Hct/MaxChroma.zig");
-    run_gen_cmd.step.dependOn(b.getInstallStep());
+    // run_gen_cmd.step.dependOn(b.getInstallStep());
 
     // build CLI
     const exe_mod = b.createModule(.{

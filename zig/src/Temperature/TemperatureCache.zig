@@ -55,7 +55,7 @@ pub const TemperatureCache = struct {
     coldestTemp: f32,
     warmestTemp: f32,
     invRange: f32,
-    fn make(input: Hct) TemperatureCache {
+    pub fn make(input: Hct) TemperatureCache {
         const chroma = input.chroma;
         const tone = input.tone;
         var hcts: [360]Hct = undefined;

@@ -1,27 +1,104 @@
 const std = @import("std");
 const load_image_mod = @import("Extract/load_image.zig");
 const extract_mod = @import("Extract/extract.zig");
+const hct_mod = @import("Hct/Hct.zig");
+const schemeContent_mod = @import("Scheme/SchemeContent.zig");
+const schemeExpressive_mod = @import("Scheme/SchemeExpressive.zig");
+const schemeFidelity_mod = @import("Scheme/SchemeFidelity.zig");
+const schemeFruitSalad_mod = @import("Scheme/SchemeFruitSalad.zig");
+const schemeMonoChrome_mod = @import("Scheme/SchemeMonoChrome.zig");
+const schemeNeutral_mod = @import("Scheme/SchemeNeutral.zig");
+const schemeRainbow_mod = @import("Scheme/SchemeRainbow.zig");
+const schemeTonalSpot_mod = @import("Scheme/SchemeTonalSpot.zig");
+const schemeVibrant_mod = @import("Scheme/SchemeVibrant.zig");
+const dynamicScheme_mod = @import("DynamicColor/DynamicScheme.zig");
 const loadImageSubsample = load_image_mod.loadImageSubsample;
 const extract = extract_mod.extract;
+const fromInt = hct_mod.fromInt;
+const schemeContent = schemeContent_mod.schemeContent;
+const schemeExpressive = schemeExpressive_mod.schemeExpressive;
+const schemeFidelity = schemeFidelity_mod.schemeFidelity;
+const schemeFruitSalad = schemeFruitSalad_mod.schemeFruitSalad;
+const schemeMonoChrome = schemeMonoChrome_mod.schemeMonoChrome;
+const schemeNeutral = schemeNeutral_mod.schemeNeutral;
+const schemeRainbow = schemeRainbow_mod.schemeRainbow;
+const schemeTonalSpot = schemeTonalSpot_mod.schemeTonalSpot;
+const schemeVibrant = schemeVibrant_mod.schemeVibrant;
+const showAllColors = dynamicScheme_mod.showAllColors;
 
 const io = std.Options.debug_io;
 
 pub fn main() !void {
-    const args_c_style = std.os.argv;
-    if (args_c_style.len != 2) {
-        std.debug.print("Usage: {s} <image_path>", .{std.mem.span(args_c_style[0])});
-        return;
-    }
-    const image_path: [*:0]const u8 = std.mem.span(args_c_style[1]);
+    // const args_c_style = std.os.argv;
+    // if (args_c_style.len != 2) {
+    //     std.debug.print("Usage: {s} <image_path>", .{std.mem.span(args_c_style[0])});
+    //     return;
+    // }
+    // const image_path: [*:0]const u8 = std.mem.span(args_c_style[1]);
     var stdout_writer = std.Io.File.stdout().writer(io, &.{});
     const stdout = &stdout_writer.interface;
-    var rgb: [60000]u8 = undefined;
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
-    const out_count = try loadImageSubsample(allocator, &rgb, image_path);
-    const extracted_colors = extract(128, rgb[0 .. out_count * 3], 4);
-    for (extracted_colors) |color| {
-        try stdout.print("Color: {x}\n", .{color});
-    }
+    // var rgb: [60000]u8 = undefined;
+    // var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    // defer arena.deinit();
+    // const allocator = arena.allocator();
+    // const out_count = try loadImageSubsample(allocator, &rgb, image_path);
+    // const extracted_colors = extract(128, rgb[0 .. out_count * 3], 4);
+    // for (extracted_colors) |color| {
+    //     try stdout.print("Color: {x}\n", .{color});
+    // }
+    const color = fromInt(0xff2660ce);
+    const contentLight = schemeContent(color, false, 0.0);
+    const contentDark = schemeContent(color, true, 0.0);
+    const expressiveLight = schemeExpressive(color, false, 0.0);
+    const expressiveDark = schemeExpressive(color, true, 0.0);
+    const fidelityLight = schemeFidelity(color, false, 0.0);
+    const fidelityDark = schemeFidelity(color, true, 0.0);
+    const fruitSaladLight = schemeFruitSalad(color, false, 0.0);
+    const fruitSaladDark = schemeFruitSalad(color, true, 0.0);
+    const monoChromeLight = schemeMonoChrome(color, false, 0.0);
+    const monoChromeDark = schemeMonoChrome(color, true, 0.0);
+    const neutralLight = schemeNeutral(color, false, 0.0);
+    const neutralDark = schemeNeutral(color, true, 0.0);
+    const rainbowLight = schemeRainbow(color, false, 0.0);
+    const rainbowDark = schemeRainbow(color, true, 0.0);
+    const tonalSpotLight = schemeTonalSpot(color, false, 0.0);
+    const tonalSpotDark = schemeTonalSpot(color, true, 0.0);
+    const vibrantLight = schemeVibrant(color, false, 0.0);
+    const vibrantDark = schemeVibrant(color, true, 0.0);
+    try stdout.print("\nScheme Content Light:\n", .{});
+    try showAllColors(contentLight);
+    try stdout.print("\nScheme Content Dark:\n", .{});
+    try showAllColors(contentDark);
+    try stdout.print("\nScheme Expressive Light:\n", .{});
+    try showAllColors(expressiveLight);
+    try stdout.print("\nScheme Expressive Dark:\n", .{});
+    try showAllColors(expressiveDark);
+    try stdout.print("\nScheme Fidelity Light:\n", .{});
+    try showAllColors(fidelityLight);
+    try stdout.print("\nScheme Fidelity Dark:\n", .{});
+    try showAllColors(fidelityDark);
+    try stdout.print("\nScheme FruitSalad Light:\n", .{});
+    try showAllColors(fruitSaladLight);
+    try stdout.print("\nScheme FruitSalad Dark:\n", .{});
+    try showAllColors(fruitSaladDark);
+    try stdout.print("\nScheme MonoChrome Light:\n", .{});
+    try showAllColors(monoChromeLight);
+    try stdout.print("\nScheme MonoChrome Dark:\n", .{});
+    try showAllColors(monoChromeDark);
+    try stdout.print("\nScheme Neutral Light:\n", .{});
+    try showAllColors(neutralLight);
+    try stdout.print("\nScheme Neutral Dark:\n", .{});
+    try showAllColors(neutralDark);
+    try stdout.print("\nScheme Rainbow Light:\n", .{});
+    try showAllColors(rainbowLight);
+    try stdout.print("\nScheme Rainbow Dark:\n", .{});
+    try showAllColors(rainbowDark);
+    try stdout.print("\nScheme TonalSpot Light:\n", .{});
+    try showAllColors(tonalSpotLight);
+    try stdout.print("\nScheme TonalSpot Dark:\n", .{});
+    try showAllColors(tonalSpotDark);
+    try stdout.print("\nScheme Vibrant Light:\n", .{});
+    try showAllColors(vibrantLight);
+    try stdout.print("\nScheme Vibrant Dark:\n", .{});
+    try showAllColors(vibrantDark);
 }
