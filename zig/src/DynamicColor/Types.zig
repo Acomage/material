@@ -3,7 +3,7 @@ const tonalPalette_mod = @import("../Palettes/TonalPalette.zig");
 const hct_mod = @import("../Hct/Hct.zig");
 const dynamicScheme_mod = @import("../Scheme/DynamicScheme.zig");
 const lerp = std.math.lerp;
-const DynamicScheme = dynamicScheme_mod.DynamicScheme;
+pub const DynamicScheme = dynamicScheme_mod.DynamicScheme;
 const TonalPalette = tonalPalette_mod.TonalPalette;
 
 pub const ContrastCurve = struct {
@@ -11,7 +11,7 @@ pub const ContrastCurve = struct {
     normal: f32,
     medium: f32,
     high: f32,
-    fn get(self: ContrastCurve, contrast_level: f32) f32 {
+    pub fn get(self: ContrastCurve, contrast_level: f32) f32 {
         if (contrast_level <= -1.0) {
             return self.low;
         } else if (contrast_level < 0.0) {
@@ -68,6 +68,6 @@ pub const ToneFnPair = fn (s: DynamicScheme) [2]f32;
 
 pub const DynamicColor = struct {
     name: []const u8,
-    toneFn: ToneFn,
+    toneFn: *const ToneFn,
     palette: Palette,
 };

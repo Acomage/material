@@ -12,7 +12,7 @@ const KeyColor = struct {
     hue: f32,
     requestedChroma: f32,
     fn create(self: KeyColor) Hct {
-        const pivotTone = 50.0;
+        const pivotTone: f32 = 50.0;
         const hue = self.hue;
         const requestedChroma = self.requestedChroma;
         const index = @as(usize, @intFromFloat(@round(hue * 2)));
@@ -68,6 +68,7 @@ pub fn fromHct(hct: Hct) TonalPalette {
 }
 
 pub fn fromHueAndChroma(hue: f32, chorma: f32) TonalPalette {
+    @setEvalBranchQuota(10000000);
     const hue_ = @mod(hue, 360.0);
     const keyColor = KeyColor{
         .hue = hue_,

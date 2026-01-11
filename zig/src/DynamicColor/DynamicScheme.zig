@@ -27,7 +27,7 @@ pub fn getRotatedHue(sourceColor: Hct, hues: [9]f32, rotations: [9]f32) f32 {
 pub fn showAllColors(s: DynamicScheme) !void {
     var stdout_writer = std.Io.File.stdout().writer(io, &.{});
     const stdout = &stdout_writer.interface;
-    for (allMaterialDynamicColors) |materialColor| {
+    inline for (allMaterialDynamicColors) |materialColor| {
         const colorValue = getArgb(materialColor, s);
         const colorHex = hexFromArgb(colorValue);
         try stdout.print("{s}: {s}\n", .{ materialColor.name, colorHex });

@@ -233,11 +233,13 @@ pub fn toneFnPair(roleA: ToneFn, roleB: ToneFn, delta: f32, polarity: TonalPolar
         TonalPolarity.lighter => !s.isDark,
         TonalPolarity.darker => s.isDark,
     };
-    const nearer = if (aIsNearer) roleA else roleB;
-    const farther = if (aIsNearer) roleB else roleA;
-    const expansionDir = if (s.isDark) 1.0 else -1.0;
-    var n_tone = nearer(s);
-    var f_tone = farther(s);
+    // const nearer = if (aIsNearer) roleA else roleB;
+    // const farther = if (aIsNearer) roleB else roleA;
+    const expansionDir: f32 = if (s.isDark) 1.0 else -1.0;
+    // var n_tone = nearer(s);
+    // var f_tone = farther(s);
+    var n_tone = if (aIsNearer) roleA(s) else roleB(s);
+    var f_tone = if (aIsNearer) roleB(s) else roleA(s);
     if ((f_tone - n_tone) * expansionDir < delta) {
         f_tone = clamp(n_tone + delta * expansionDir, 0.0, 100.0);
         if ((f_tone - n_tone) * expansionDir < delta) {
@@ -290,6 +292,6 @@ pub fn pairCombinator(delta: f32, polarity: TonalPolarity, stayTogether: bool, r
     return [2]ToneFn{ nearer, farther };
 }
 
-pub fn getArgb(c: DynamicColor, s: DynamicScheme) u32 {
-    return c.palette.getTonalPalette(s).getArgb(c.toneFn(s));
+pub fn getArgb(comptime c: DynamicColor, s: DynamicScheme) u32 {
+    return c.palette.getTonalPalette(s).getArgb(c.toneFn.*(s));
 }

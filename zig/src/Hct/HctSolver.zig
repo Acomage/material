@@ -57,10 +57,10 @@ const Y_FROM_LINRGB = Vec3{ 0.212656, 0.715158, 0.072186 };
 
 const y0 = 100 * Y_FROM_LINRGB[2];
 const y1 = 100 * Y_FROM_LINRGB[0];
-const y2 = 100 * Y_FROM_LINRGB[1];
-const y3 = y0 + y1;
-const y4 = y0 + y2;
-const y5 = y1 + y2;
+const y2 = y0 + y1;
+const y3 = 100 * Y_FROM_LINRGB[1];
+const y4 = y0 + y3;
+const y5 = y1 + y3;
 
 fn chromaticAdaptation(component: f32) f32 {
     const af = pow(f32, @abs(component), 0.42);
@@ -275,7 +275,8 @@ pub fn solveToInt(hueDegrees: f32, chroma: f32, lstar: f32) u32 {
     return argbFromLinrgb(linrgb);
 }
 
-// comptime function, don't need to be optimized.
+// only used for generating code at build time
+// don't need to be optimized
 pub fn maxChroma(hue: f32, tone: f32) f32 {
     const y = yFromLstar(tone);
     const hueRadians = degreesToRadians(@mod(hue, 360.0));
