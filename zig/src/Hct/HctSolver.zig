@@ -63,25 +63,52 @@ const y4 = y0 + y3;
 const y5 = y1 + y3;
 
 fn chromaticAdaptation(component: f32) f32 {
-    const af = pow(f32, @abs(component), 0.42);
-    return sign(component) * 400.0 * af / (af + 27.13);
+    const af = pow(f32, component, 0.42);
+    return 400.0 * af / (af + 27.13);
+}
+
+const cutNum = 1024;
+const upperBound = @reduce(.Add, SCALED_DISCOUNT_FROM_LINRGB[2]) * 100.0;
+const lowerBound = upperBound * 0.1;
+const step_length = (upperBound - lowerBound) / @as(comptime_float, @floatFromInt(cutNum - 1));
+const chromaticAdaptationLUT: [cutNum]f32 = blk: {
+    @setEvalBranchQuota(100000);
+    var lut: [cutNum]f32 = undefined;
+    for (0..cutNum) |i| {
+        const input = lowerBound + @as(f32, @floatFromInt(i)) * step_length;
+        lut[i] = chromaticAdaptation(input);
+    }
+    break :blk lut;
+};
+
+fn getChromaticAdaptationFromLUT(component: f32) f32 {
+    if (component <= lowerBound) {
+        return chromaticAdaptation(component);
+    } else {
+        const indexF = (component - lowerBound) / step_length;
+        const index = @as(usize, @intFromFloat(@round(indexF)));
+        return chromaticAdaptationLUT[index];
+    }
 }
 
 // TODO: maybe speed this up by LUT?
 // TODO: check it after profiling.
-fn chromaticAdaptationV(scaled: Vec3) Vec3 {
-    const scaledAbs = @abs(scaled);
+fn chromaticAdaptationVOld(scaled: Vec3) Vec3 {
     const af = Vec3{
-        pow(f32, scaledAbs[0], 0.42),
-        pow(f32, scaledAbs[1], 0.42),
-        pow(f32, scaledAbs[2], 0.42),
+        pow(f32, scaled[0], 0.42),
+        pow(f32, scaled[1], 0.42),
+        pow(f32, scaled[2], 0.42),
     };
-    const signOfScaled = Vec3{
-        sign(scaled[0]),
-        sign(scaled[1]),
-        sign(scaled[2]),
+    return @as(Vec3, @splat(400.0)) * af / (af + @as(Vec3, @splat(27.13)));
+}
+
+// LUT version, maybe file near grey axis colors.
+fn chromaticAdaptationV(scaled: Vec3) Vec3 {
+    return Vec3{
+        getChromaticAdaptationFromLUT(scaled[0]),
+        getChromaticAdaptationFromLUT(scaled[1]),
+        getChromaticAdaptationFromLUT(scaled[2]),
     };
-    return signOfScaled * @as(Vec3, @splat(400.0)) * af / (af + @as(Vec3, @splat(27.13)));
 }
 
 fn inverseChromaticAdaptation(adapted: f32) f32 {
@@ -103,9 +130,14 @@ fn inverseChromaticAdaptationV(adapted: Vec3) Vec3 {
     };
 }
 
-fn hueOf(linrgb: Vec3) f32 {
+// this two epsilons are determined by guessing,
+// maybe use a better method to find them later.
+// TODO: get better epsilons
+const yLowerEpsilon = 2.0;
+const yUpperEpsilon = 5.0;
+fn hueOf(y: f32, linrgb: Vec3) f32 {
     const scaled = mul(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
-    const rgbA = chromaticAdaptationV(scaled);
+    const rgbA = if (y >= yLowerEpsilon and y <= ySingular - yUpperEpsilon) chromaticAdaptationV(scaled) else chromaticAdaptationVOld(scaled);
     const a = dot(aVec, rgbA);
     const b = dot(bVec, rgbA);
     return atan2(b, a);
@@ -115,8 +147,8 @@ fn hueOf(linrgb: Vec3) f32 {
 // SCALED_DISCOUNT_FROM_LINRGB v = [1,1,1]
 // v.x = 100
 const greyAxis = Vec3{ 100, 96.18310557389496, 95.47888926024586 };
-
-const lstarSingular = lstarFromY(dot(greyAxis, Y_FROM_LINRGB));
+const ySingular = dot(greyAxis, Y_FROM_LINRGB);
+const lstarSingular = lstarFromY(ySingular);
 
 fn areInCycleOrder(a: f32, b: f32, c: f32) bool {
     const deltaAB = @mod(b - a, 2 * pi);
@@ -168,10 +200,10 @@ inline fn pickSegment(
     const vlist = nthVertexArray(y, indices);
     var biggest = vlist[0];
     var smallest = vlist[0];
-    var biggestDist = ccwDist(targetHueNorm, hueOf(biggest));
+    var biggestDist = ccwDist(targetHueNorm, hueOf(y, biggest));
     var smallestDist = biggestDist;
     inline for (vlist[1..]) |v| {
-        const dist = ccwDist(targetHueNorm, hueOf(v));
+        const dist = ccwDist(targetHueNorm, hueOf(y, v));
         if (dist > biggestDist) {
             biggest = v;
             biggestDist = dist;
@@ -211,14 +243,18 @@ fn bisectToSegment(y: f32, targetHue: f32) [2]Vec3 {
 
 fn bisectToLimit(y: f32, targetHue: f32) Vec3 {
     var left, var right = bisectToSegment(y, targetHue);
-    const hueLeft = hueOf(left);
+    const hueLeft = hueOf(y, left);
     const half = @as(Vec3, @splat(0.5));
     var mid = (left + right) * half;
-    var midHue = hueOf(mid);
+    var midHue = hueOf(y, mid);
     const n: u8 = 8;
+    const epsilon = @as(Vec3, @splat(0.1));
     inline for (0..n) |_| {
+        if (@reduce(.And, @abs(right - left) <= epsilon)) {
+            break;
+        }
         mid = (left + right) * half;
-        midHue = hueOf(mid);
+        midHue = hueOf(y, mid);
         if (areInCycleOrder(hueLeft, targetHue, midHue)) {
             right = mid;
         } else {
@@ -262,7 +298,7 @@ fn findResultByJ(hueRadians: f32, chroma: f32, y: f32) u32 {
 }
 
 pub fn solveToInt(hueDegrees: f32, chroma: f32, lstar: f32) u32 {
-    if (chroma < 0.0001 or lstar < 0.0001 or lstar >= lstarSingular) {
+    if (chroma < 0.0001 or lstar < 0.0001 or lstar >= lstarSingular - 0.0001) {
         return argbFromLstar(lstar);
     }
     const hueRadians = degreesToRadians(@mod(hueDegrees, 360.0));
@@ -275,14 +311,12 @@ pub fn solveToInt(hueDegrees: f32, chroma: f32, lstar: f32) u32 {
     return argbFromLinrgb(linrgb);
 }
 
-// only used for generating code at build time
-// don't need to be optimized
 pub fn maxChroma(hue: f32, tone: f32) f32 {
     const y = yFromLstar(tone);
     const hueRadians = degreesToRadians(@mod(hue, 360.0));
     const linrgb = bisectToLimit(y, hueRadians);
     const scaled = mul(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
-    const rgbA = chromaticAdaptationV(scaled);
+    const rgbA = if (y >= yLowerEpsilon or y <= ySingular - yUpperEpsilon) chromaticAdaptationV(scaled) else chromaticAdaptationVOld(scaled);
     const a = dot(aVec, rgbA);
     const b = dot(bVec, rgbA);
     const u = dot(uVec, rgbA);
@@ -296,15 +330,4 @@ pub fn maxChroma(hue: f32, tone: f32) f32 {
     const alpha = alphak * pow(f32, t, 0.9);
     const chroma = alpha * @sqrt(jdiv100);
     return chroma;
-}
-
-test solveToInt {
-    const print = std.debug.print;
-    const stringUtils_mod = @import("../Utils/StringUtils.zig");
-    const hexFromArgb = stringUtils_mod.hexFromArgb;
-    print("{s}\n", .{hexFromArgb(solveToInt(250.0, 50.0, 60.0))});
-    print("{s}\n", .{hexFromArgb(solveToInt(135.4, 153.6, 20.1))});
-    print("{s}\n", .{hexFromArgb(solveToInt(145.0, 45.1, 45.8))});
-    print("{s}\n", .{hexFromArgb(solveToInt(176.5, 53.0, 25.7))});
-    print("{s}\n", .{hexFromArgb(solveToInt(426.5, 71.3, 46.1))});
 }

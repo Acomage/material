@@ -64,14 +64,8 @@ pub const Cam16 = struct {
 pub fn fromInt(argb: u32) Cam16 {
     const linrgb = linrgbFromArgb(argb);
     const rgbAfPre = mul(linrgb, SRGB_TO_CAM16RGB);
-    const rgbAfPreAbs = @abs(rgbAfPre);
-    const rgbAf = Vec3{ pow(f32, rgbAfPreAbs[0], 0.42), pow(f32, rgbAfPreAbs[1], 0.42), pow(f32, rgbAfPreAbs[2], 0.42) };
-    const signRgbD = Vec3{
-        sign(rgbAfPre[0]),
-        sign(rgbAfPre[1]),
-        sign(rgbAfPre[2]),
-    };
-    const rgbA = signRgbD * @as(Vec3, @splat(400.0)) * rgbAf / (rgbAf + @as(Vec3, @splat(27.13)));
+    const rgbAf = Vec3{ pow(f32, rgbAfPre[0], 0.42), pow(f32, rgbAfPre[1], 0.42), pow(f32, rgbAfPre[2], 0.42) };
+    const rgbA = @as(Vec3, @splat(400.0)) * rgbAf / (rgbAf + @as(Vec3, @splat(27.13)));
     const a = dot(aVec, rgbA);
     const b = dot(bVec, rgbA);
     const u = dot(uVec, rgbA);

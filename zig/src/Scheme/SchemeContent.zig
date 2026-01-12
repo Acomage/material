@@ -11,7 +11,7 @@ const fromHct = tonalPalette_mod.fromHct;
 const fixIfDisliked = dislike_mod.fixIfDisliked;
 const TemperatureCache = temperature_mod.TemperatureCache;
 
-pub fn schemeContent(color: Hct, isDark: bool, contrastLevel: f32) DynamicScheme {
+pub fn schemeContent(color: Hct, isDark: bool, contrastLevel: f32, cache: TemperatureCache) DynamicScheme {
     return .{
         .sourceColorHct = color,
         .variant = Variant.content,
@@ -19,7 +19,7 @@ pub fn schemeContent(color: Hct, isDark: bool, contrastLevel: f32) DynamicScheme
         .contrastLevel = contrastLevel,
         .primaryPalette = fromHueAndChroma(color.hue, color.chroma),
         .secondaryPalette = fromHueAndChroma(color.hue, @max(color.chroma - 32.0, color.chroma / 2.0)),
-        .tertiaryPalette = fromHct(fixIfDisliked(TemperatureCache.make(color).getAnalogousColorAt(3, 6, 2))),
+        .tertiaryPalette = fromHct(fixIfDisliked(cache.getAnalogousColorAt(3, 6, 2))),
         .neutralPalette = fromHueAndChroma(color.hue, color.chroma / 8.0),
         .neutralVariantPalette = fromHueAndChroma(color.hue, color.chroma / 8.0 + 4.0),
     };
