@@ -1,16 +1,14 @@
-# Material Color Utilities in Lean4
-
 Chinese: [README_ZH_CN.md](./README_ZH_CN.md)
 
 # About this repository
 
-This repository contains the google material color utilities rewritten in Lean4.
+This repository contains the google material color utilities rewritten in Lean4, futhark and zig.
 
 The qauntizer and score algorithms are implemented by Futhark.
-Other algorithms are implemented by Lean4.
+Other algorithms are implemented both by Lean4 and zig.
 
-Since the original code is written in OOP style, the code here may not be very "leany".
-I am refactoring the code to be more idiomatic Lean4 now.
+The Lean4 code is mainly used to refactor the google code, while the zig code
+rewrites the refactored code in zig.
 
 # Example Visualization
 
@@ -50,7 +48,7 @@ To generate similar visualizations for your own images:
    ```
 
 # Build it from source
-To Build the project from source, you need:
+To Build the Lean4 version of project from source, you need:
 - lake
 - Futhark
 - ISPC (I use ISPC for the Futhark backend, but you can use other backends too)
@@ -68,6 +66,23 @@ Since the C toolchain of Lean4 use old glibc, if your libpng and libjpeg-turbo
 on your system are linked to your system glibc, you may get some errors.
 So I recommend you to use clang or other C compilers for LEAN_CC instead of
 using the default C toolchain of Lean4.
+
+To Build the zig version of project from source, you need:
+- zig 0.16.0
+- Futhark
+- ISPC (I use ISPC for the Futhark backend, but you can use other backends too)
+- libjpeg-turbo and libpng (for image decoding, these can be replaced by any image decoder libraries, and blend2d's png decoder is faster than libpng in my test)
+- make (for building the Futhark part, may migrate to build.zig later)
+- clang (I use clang for compiling the Futhark generated C code, but you can use other C compilers too, for example, you may use zig)
+
+Then, you need to enter the `zig` directory, and run:
+
+```bash
+make
+zig build -Doptimize=ReleaseFast
+```
+
+Then you can get the binary name `main` in `zig/zig-out/bin/` directory.
 
 # Thanks
 - [`material color utilities`](https://github.com/material-foundation/material-color-utilities)
