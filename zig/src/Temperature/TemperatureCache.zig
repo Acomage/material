@@ -132,20 +132,6 @@ pub const TemperatureCache = struct {
         }
         return self.hcts[bestHue];
     }
-    // TODO: maybe times invRange outside?
-    // decide whether to keep or not after testing
-    fn calculateTotalTempDeltaOld(self: TemperatureCache, startHue: usize) f32 {
-        var lastTemp: f32 = (self.temps[startHue] - self.coldestTemp) * self.invRange;
-        var sum: f32 = 0.0;
-        for (startHue + 1..startHue + 360) |i| {
-            const hue = @mod(i, 360);
-            const temp = (self.temps[hue] - self.coldestTemp) * self.invRange;
-            const delta = @abs(temp - lastTemp);
-            lastTemp = temp;
-            sum += delta;
-        }
-        return sum;
-    }
     fn calculateTotalTempDelta(self: TemperatureCache, startHue: usize) f32 {
         var lastTemp: f32 = self.temps[startHue];
         var sum: f32 = 0.0;
