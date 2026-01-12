@@ -33,6 +33,8 @@ const showAllColors = dynamicScheme_mod.showAllColors;
 var threaded: std.Io.Threaded = .init_single_threaded;
 const io = threaded.io();
 
+// const Timer = std.time.Timer;
+
 pub fn main() !void {
     const args_c_style = std.os.argv;
     if (args_c_style.len != 2) {
@@ -48,7 +50,10 @@ pub fn main() !void {
     const allocator = arena.allocator();
     const out_count = try loadImageSubsample(allocator, &rgb, image_path);
     try stdout.print("Extract colors from {s}\n", .{image_path});
+    // var timer = try Timer.start();
     const extracted_colors = extract(128, rgb[0 .. out_count * 3], 4);
+    // const time = timer.read();
+    // try stdout.print("Extraction took {d} ms\n", .{time / std.time.ns_per_ms});
     try stdout.print("Extracted 4 Colors:\n", .{});
     for (extracted_colors) |color| {
         try stdout.print("{s}\n", .{hexFromArgb(color)});
