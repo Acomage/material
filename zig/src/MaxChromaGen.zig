@@ -2,6 +2,11 @@ const std = @import("std");
 const io = std.Options.debug_io;
 const hct = @import("Hct/HctSolver.zig");
 const maxChroma = hct.maxChromaBuildTime;
+const maxChroma2 = hct.maxChromaBuildTime2;
+const MaxChromaAndArgb = hct.MaxChromaAndArgb;
+const ySingular = hct.ySingular;
+const yLowerEpsilon = hct.yLowerEpsilon;
+const yUpperEpsilon = hct.yUpperEpsilon;
 
 pub const peak = struct {
     tone: f32,
@@ -48,7 +53,21 @@ fn generatePeak() [720]peak {
     return lut;
 }
 
-fn writeZigFile(out_path: []const u8, lut: [720]peak) !void {
+fn generateMaxChromaLUT() [100][360]MaxChromaAndArgb {
+    var lut: [100][360]MaxChromaAndArgb = undefined;
+    const step = (ySingular - yUpperEpsilon - yLowerEpsilon) / 99.0;
+    var y: f32 = yLowerEpsilon;
+    for (0..100) |i| {
+        y = yLowerEpsilon + step * @as(f32, @floatFromInt(i));
+        for (0..360) |hueInt| {
+            const hue = @as(f32, @floatFromInt(hueInt));
+            lut[i][hueInt] = maxChroma2(hue, y);
+        }
+    }
+    return lut;
+}
+
+fn writeZigFile(out_path: []const u8, peaklut: [720]peak, maxChromaLut: [100][360]MaxChromaAndArgb) !void {
     const cwd: std.Io.Dir = std.Io.Dir.cwd();
 
     const file: std.Io.File = try cwd.createFile(io, out_path, .{
@@ -67,14 +86,42 @@ fn writeZigFile(out_path: []const u8, lut: [720]peak) !void {
         \\    tone: f32,
         \\    chroma: f32,
         \\};
+        \\pub const MaxChromaAndArgb = struct {
+        \\    chroma: f32,
+        \\    argb: u32,
+        \\};
         \\
         \\pub const maxChromaPeak: [720]peak = .{
         \\
     );
 
-    for (lut, 0..) |p, idx| {
+    for (peaklut, 0..) |p, idx| {
         try w.print("    .{{ .tone = {d:.10}, .chroma = {d:.10} }}", .{ p.tone, p.chroma });
-        if (idx + 1 != lut.len) {
+        if (idx + 1 != peaklut.len) {
+            try w.writeAll(",\n");
+        } else {
+            try w.writeAll("\n");
+        }
+    }
+
+    try w.writeAll("};\n");
+
+    try w.writeAll(
+        \\
+        \\pub const maxChromaLUT: [100][360]MaxChromaAndArgb = .{
+        \\
+    );
+
+    for (maxChromaLut, 0..) |row, row_idx| {
+        try w.writeAll("    .{");
+        for (row, 0..) |value, col_idx| {
+            try w.print(".{{  .chroma = {d:.10}, .argb = {d} }}", .{ value.chroma, value.argb });
+            if (col_idx + 1 != row.len) {
+                try w.writeAll(", ");
+            }
+        }
+        try w.writeAll(" }");
+        if (row_idx + 1 != maxChromaLut.len) {
             try w.writeAll(",\n");
         } else {
             try w.writeAll("\n");
@@ -99,5 +146,6 @@ pub fn main() !void {
 
     const out_path = args[1];
     const peaklut = generatePeak();
-    try writeZigFile(out_path, peaklut);
+    const maxChromaLut = generateMaxChromaLUT();
+    try writeZigFile(out_path, peaklut, maxChromaLut);
 }

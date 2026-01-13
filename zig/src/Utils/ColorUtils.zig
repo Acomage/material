@@ -37,7 +37,7 @@ const linearizedLUT: [256]f32 = blk: {
     break :blk res;
 };
 
-fn rgbFromU32(color: u32) @Vector(3, u32) {
+pub fn rgbFromU32(color: u32) @Vector(3, u32) {
     const r = (color >> 16) & 0xFF;
     const g = (color >> 8) & 0xFF;
     const b = (color & 0xFF);

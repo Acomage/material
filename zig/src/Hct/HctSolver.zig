@@ -2,7 +2,10 @@ const std = @import("std");
 const colorUtils_mod = @import("../Utils/ColorUtils.zig");
 const mathUtils_mod = @import("../Utils/MathUtils.zig");
 const viewingConditions_mod = @import("ViewingConditions.zig");
+const maxChroma_mod = @import("MaxChroma.zig");
 const cam16_mod = @import("Cam16.zig");
+const rgbFromU32 = colorUtils_mod.rgbFromU32;
+const maxChromaLUT = maxChroma_mod.maxChromaLUT;
 const pow = std.math.pow;
 const sign = std.math.sign;
 const atan2 = std.math.atan2;
@@ -133,8 +136,8 @@ fn inverseChromaticAdaptationV(adapted: Vec3) Vec3 {
 // this two epsilons are determined by guessing,
 // maybe use a better method to find them later.
 // TODO: get better epsilons
-const yLowerEpsilon = 2.0;
-const yUpperEpsilon = 5.0;
+pub const yLowerEpsilon = 2.0;
+pub const yUpperEpsilon = 5.0;
 fn hueOf(y: f32, linrgb: Vec3) f32 {
     const scaled = mul(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
     const rgbA = if (y >= yLowerEpsilon and y <= ySingular - yUpperEpsilon) chromaticAdaptationV(scaled) else chromaticAdaptationVOld(scaled);
@@ -155,7 +158,7 @@ fn hueOfBuildTime(linrgb: Vec3) f32 {
 // SCALED_DISCOUNT_FROM_LINRGB v = [1,1,1]
 // v.x = 100
 const greyAxis = Vec3{ 100, 96.18310557389496, 95.47888926024586 };
-const ySingular = dot(greyAxis, Y_FROM_LINRGB);
+pub const ySingular = dot(greyAxis, Y_FROM_LINRGB);
 const lstarSingular = lstarFromY(ySingular);
 
 fn areInCycleOrder(a: f32, b: f32, c: f32) bool {
@@ -297,7 +300,7 @@ fn bisectToLimitBuildTime(y: f32, targetHue: f32) Vec3 {
 
 fn findResultByJ(hueRadians: f32, chroma: f32, y: f32) u32 {
     const maxIter = 5;
-    const tol = 0.002;
+    const tol = 0.01;
     const eHue = @cos(hueRadians + 2.0) + 3.8;
     const p1 = eHue * p1k;
     const hsin = @sin(hueRadians);
@@ -328,7 +331,7 @@ fn findResultByJ(hueRadians: f32, chroma: f32, y: f32) u32 {
     return 0;
 }
 
-pub fn solveToInt(hueDegrees: f32, chroma: f32, lstar: f32) u32 {
+pub fn solveToIntOld(hueDegrees: f32, chroma: f32, lstar: f32) u32 {
     if (chroma < 0.0001 or lstar < 0.0001 or lstar >= lstarSingular - 0.0001) {
         return argbFromLstar(lstar);
     }
@@ -340,6 +343,73 @@ pub fn solveToInt(hueDegrees: f32, chroma: f32, lstar: f32) u32 {
     }
     const linrgb = bisectToLimit(y, hueRadians);
     return argbFromLinrgb(linrgb);
+}
+
+fn averageArgb(argb1: u32, argb2: u32) u32 {
+    return (argb1 | argb2) - (((argb1 ^ argb2) & 0xfefefefe) >> 1);
+}
+
+fn weightedAverageChannel(c00: u32, c01: u32, c10: u32, c11: u32, t: f32, u: f32) u32 {
+    const c00f = @as(f32, @floatFromInt(c00));
+    const c01f = @as(f32, @floatFromInt(c01));
+    const c10f = @as(f32, @floatFromInt(c10));
+    const c11f = @as(f32, @floatFromInt(c11));
+    const resultF = (1 - t) * (1 - u) * c00f + (1 - t) * u * c01f + t * (1 - u) * c10f + t * u * c11f;
+    const result = @as(u32, @intFromFloat(@round(resultF))) & 0xff;
+    return result;
+}
+
+fn weightedAverageArgb(argb00: u32, argb01: u32, argb10: u32, argb11: u32, t: f32, u: f32) u32 {
+    const rgb00 = rgbFromU32(argb00);
+    const rgb01 = rgbFromU32(argb01);
+    const rgb10 = rgbFromU32(argb10);
+    const rgb11 = rgbFromU32(argb11);
+    const r = weightedAverageChannel(rgb00[0], rgb01[0], rgb10[0], rgb11[0], t, u);
+    const g = weightedAverageChannel(rgb00[1], rgb01[1], rgb10[1], rgb11[1], t, u);
+    const b = weightedAverageChannel(rgb00[2], rgb01[2], rgb10[2], rgb11[2], t, u);
+    return (0xFF000000) | (r << 16) | (g << 8) | b;
+}
+
+const stepY = (ySingular - yUpperEpsilon - yLowerEpsilon) / 99.0;
+pub fn solveToInt(hueDegrees: f32, chroma: f32, lstar: f32) u32 {
+    if (chroma < 0.0001 or lstar < 0.0001 or lstar >= lstarSingular - 0.0001) {
+        return argbFromLstar(lstar);
+    }
+    const hueRadians = degreesToRadians(@mod(hueDegrees, 360.0));
+    const y = yFromLstar(lstar);
+    if (y < yLowerEpsilon or y > ySingular - yUpperEpsilon) {
+        return solveToIntOld(hueDegrees, chroma, lstar);
+    }
+    const yIndex = (y - yLowerEpsilon) / stepY;
+    const yLowIndex = @as(usize, @intFromFloat(@floor(yIndex)));
+    const yHighIndex = @as(usize, @intFromFloat(@ceil(yIndex)));
+    const hueLowIndex = @mod(@as(usize, @intFromFloat(@floor(hueDegrees))), 360);
+    const hueHighIndex = @mod(@as(usize, @intFromFloat(@ceil(hueDegrees))), 360);
+    const maxChroma00 = maxChromaLUT[yLowIndex][hueLowIndex].chroma;
+    const maxChroma01 = maxChromaLUT[yLowIndex][hueHighIndex].chroma;
+    const maxChroma10 = maxChromaLUT[yHighIndex][hueLowIndex].chroma;
+    const maxChroma11 = maxChromaLUT[yHighIndex][hueHighIndex].chroma;
+    const t = yIndex - @as(f32, @floatFromInt(yLowIndex));
+    const u = @mod((hueDegrees - @as(f32, @floatFromInt(hueLowIndex))), 1.0);
+    const maxChromav = (1 - t) * (1 - u) * maxChroma00 + (1 - t) * u * maxChroma01 + t * (1 - u) * maxChroma10 + t * u * maxChroma11;
+    if (chroma >= maxChromav) {
+        // const linrgb = bisectToLimit(y, hueRadians);
+        // return argbFromLinrgb(linrgb);
+        const argb00 = maxChromaLUT[yLowIndex][hueLowIndex].argb;
+        const argb01 = maxChromaLUT[yLowIndex][hueHighIndex].argb;
+        const argb10 = maxChromaLUT[yHighIndex][hueLowIndex].argb;
+        const argb11 = maxChromaLUT[yHighIndex][hueHighIndex].argb;
+        // maybe use weighted average on ucs later
+        return weightedAverageArgb(argb00, argb01, argb10, argb11, t, u);
+    } else {
+        const exactAnswer = findResultByJ(hueRadians, chroma, y);
+        if (exactAnswer != 0) {
+            return exactAnswer;
+        } else {
+            const linrgb = bisectToLimit(y, hueRadians);
+            return argbFromLinrgb(linrgb);
+        }
+    }
 }
 
 pub fn maxChromaBuildTime(hue: f32, tone: f32) f32 {
@@ -363,8 +433,51 @@ pub fn maxChromaBuildTime(hue: f32, tone: f32) f32 {
     return chroma;
 }
 
+pub const MaxChromaAndArgb = struct {
+    chroma: f32,
+    argb: u32,
+};
+
+pub fn maxChromaBuildTime2(hue: f32, y: f32) MaxChromaAndArgb {
+    const hueRadians = degreesToRadians(@mod(hue, 360.0));
+    const linrgb = bisectToLimit(y, hueRadians);
+    const argb = argbFromLinrgb(linrgb);
+    const scaled = mul(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
+    const rgbA = chromaticAdaptationVOld(scaled);
+    const a = dot(aVec, rgbA);
+    const b = dot(bVec, rgbA);
+    const u = dot(uVec, rgbA);
+    const ac = dot(acVec, rgbA);
+    const hue_rad = @mod(atan2(b, a), 2 * pi);
+    const huePrime = if (radiansToDegrees(hue_rad) < 20.14) hue_rad + 2 * pi + 2 else hue_rad + 2;
+    const eHue = @cos(huePrime) + 3.8;
+    const p1 = eHue * p1k;
+    const t = p1 * hypot(a, b) / (u + 0.305);
+    const jdiv100 = pow(f32, ac, cz);
+    const alpha = alphak * pow(f32, t, 0.9);
+    const chroma = alpha * @sqrt(jdiv100);
+    return MaxChromaAndArgb{
+        .chroma = chroma,
+        .argb = argb,
+    };
+}
+
 pub fn maxChroma(hue: f32, tone: f32) f32 {
     const y = yFromLstar(tone);
+    if (y > yLowerEpsilon and y < ySingular - yUpperEpsilon) {
+        const yIndex = (y - yLowerEpsilon) / stepY;
+        const yLowIndex = @as(usize, @intFromFloat(@floor(yIndex)));
+        const yHighIndex = @as(usize, @intFromFloat(@ceil(yIndex)));
+        const hueLowIndex = @mod(@as(usize, @intFromFloat(@floor(hue))), 360);
+        const hueHighIndex = @mod(@as(usize, @intFromFloat(@ceil(hue))), 360);
+        const maxChroma00 = maxChromaLUT[yLowIndex][hueLowIndex].chroma;
+        const maxChroma01 = maxChromaLUT[yLowIndex][hueHighIndex].chroma;
+        const maxChroma10 = maxChromaLUT[yHighIndex][hueLowIndex].chroma;
+        const maxChroma11 = maxChromaLUT[yHighIndex][hueHighIndex].chroma;
+        const t = yIndex - @as(f32, @floatFromInt(yLowIndex));
+        const u = @mod((hue - @as(f32, @floatFromInt(hueLowIndex))), 1.0);
+        return (1 - t) * (1 - u) * maxChroma00 + (1 - t) * u * maxChroma01 + t * (1 - u) * maxChroma10 + t * u * maxChroma11;
+    }
     const hueRadians = degreesToRadians(@mod(hue, 360.0));
     const linrgb = bisectToLimitBuildTime(y, hueRadians);
     const scaled = mul(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
