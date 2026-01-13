@@ -44,7 +44,7 @@ fn getAllTone(s: DynamicScheme) [54]f32 {
     return result;
 }
 
-fn getAllArgb(s: DynamicScheme) [54]u32 {
+pub fn getAllArgb(s: DynamicScheme) [54]u32 {
     const palettes = getAllPalette(s);
     const tones = getAllTone(s);
     var result: [54]u32 = undefined;

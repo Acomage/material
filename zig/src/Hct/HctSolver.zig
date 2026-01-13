@@ -35,6 +35,7 @@ const c_ = default.c;
 const z = default.z;
 const cz = c_ * z;
 const nbb = default.nbb;
+const awDivNbb = aw / nbb;
 const p1k = 50000.0 / 13.0 * 0.25 * nc * ncb;
 const tInnerCoeff = 1.0 / pow(f32, (1.64 - pow(f32, 0.29, n_)), 0.73);
 
@@ -305,13 +306,11 @@ fn findResultByJ(hueRadians: f32, chroma: f32, y: f32) u32 {
     const p1 = eHue * p1k;
     const hsin = @sin(hueRadians);
     const hcos = @cos(hueRadians);
-    var j = 11 * @sqrt(y);
+    var j = 0.11 * @sqrt(y);
     for (0..maxIter) |i| {
-        const jNormalized = j / 100.0;
-        const alpha = if (j == 0.0) 0.0 else chroma / @sqrt(jNormalized);
+        const alpha = chroma / @sqrt(j);
         const t = pow(f32, alpha * tInnerCoeff, 1.0 / 0.9);
-        const ac = aw * pow(f32, jNormalized, 1.0 / cz);
-        const p2 = ac / nbb;
+        const p2 = awDivNbb * pow(f32, j, 1.0 / cz);
         const gamma = 23.0 * (p2 + 0.305) * t / (23.0 * p1 + 11.0 * t * hcos + 108.0 * t * hsin);
         const a = gamma * hcos;
         const b = gamma * hsin;
