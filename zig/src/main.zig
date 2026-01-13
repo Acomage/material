@@ -36,30 +36,31 @@ const io = threaded.io();
 // const Timer = std.time.Timer;
 
 pub fn main() !void {
-    const args_c_style = std.os.argv;
-    if (args_c_style.len != 2) {
-        std.debug.print("Usage: {s} <image_path>", .{std.mem.span(args_c_style[0])});
-        return;
-    }
-    const image_path: [*:0]const u8 = std.mem.span(args_c_style[1]);
+    // const args_c_style = std.os.argv;
+    // if (args_c_style.len != 2) {
+    //     std.debug.print("Usage: {s} <image_path>", .{std.mem.span(args_c_style[0])});
+    //     return;
+    // }
+    // const image_path: [*:0]const u8 = std.mem.span(args_c_style[1]);
     var stdout_writer = std.Io.File.stdout().writer(io, &.{});
     const stdout = &stdout_writer.interface;
-    var rgb: [60000]u8 = undefined;
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
-    const out_count = try loadImageSubsample(allocator, &rgb, image_path);
-    try stdout.print("Extract colors from {s}\n", .{image_path});
-    // var timer = try Timer.start();
-    const extracted_colors = extract(128, rgb[0 .. out_count * 3], 4);
-    // const time = timer.read();
-    // try stdout.print("Extraction took {d} ms\n", .{time / std.time.ns_per_ms});
-    try stdout.print("Extracted 4 Colors:\n", .{});
-    for (extracted_colors) |color| {
-        try stdout.print("{s}\n", .{hexFromArgb(color)});
-    }
-    try stdout.print("Use source color {s} to create scheme\n", .{hexFromArgb(extracted_colors[0])});
-    const color = fromInt(extracted_colors[0]);
+    // var rgb: [60000]u8 = undefined;
+    // var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    // defer arena.deinit();
+    // const allocator = arena.allocator();
+    // const out_count = try loadImageSubsample(allocator, &rgb, image_path);
+    // try stdout.print("Extract colors from {s}\n", .{image_path});
+    // // var timer = try Timer.start();
+    // const extracted_colors = extract(128, rgb[0 .. out_count * 3], 4);
+    // // const time = timer.read();
+    // // try stdout.print("Extraction took {d} ms\n", .{time / std.time.ns_per_ms});
+    // try stdout.print("Extracted 4 Colors:\n", .{});
+    // for (extracted_colors) |color| {
+    //     try stdout.print("{s}\n", .{hexFromArgb(color)});
+    // }
+    // try stdout.print("Use source color {s} to create scheme\n", .{hexFromArgb(extracted_colors[0])});
+    // const color = fromInt(extracted_colors[0]);
+    const color = fromInt(0x2762cf);
     const cache = temperatureCache.make(color);
     const contentLight = schemeContent(color, false, 0.0, cache);
     const contentDark = schemeContent(color, true, 0.0, cache);

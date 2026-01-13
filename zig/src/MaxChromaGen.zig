@@ -1,7 +1,7 @@
 const std = @import("std");
 const io = std.Options.debug_io;
 const hct = @import("Hct/HctSolver.zig");
-const maxChroma = hct.maxChroma;
+const maxChroma = hct.maxChromaBuildTime;
 
 pub const peak = struct {
     tone: f32,
@@ -39,7 +39,7 @@ fn findPeak(hue: f32) peak {
     };
 }
 
-fn generateLut() [720]peak {
+fn generatePeak() [720]peak {
     var lut: [720]peak = undefined;
     for (0..720) |i| {
         const hue = @as(f32, @floatFromInt(i)) / 2.0;
@@ -98,6 +98,6 @@ pub fn main() !void {
     }
 
     const out_path = args[1];
-    const lut = generateLut();
-    try writeZigFile(out_path, lut);
+    const peaklut = generatePeak();
+    try writeZigFile(out_path, peaklut);
 }

@@ -311,6 +311,27 @@ pub fn solveToInt(hueDegrees: f32, chroma: f32, lstar: f32) u32 {
     return argbFromLinrgb(linrgb);
 }
 
+pub fn maxChromaBuildTime(hue: f32, tone: f32) f32 {
+    const y = yFromLstar(tone);
+    const hueRadians = degreesToRadians(@mod(hue, 360.0));
+    const linrgb = bisectToLimit(y, hueRadians);
+    const scaled = mul(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
+    const rgbA = chromaticAdaptationVOld(scaled);
+    const a = dot(aVec, rgbA);
+    const b = dot(bVec, rgbA);
+    const u = dot(uVec, rgbA);
+    const ac = dot(acVec, rgbA);
+    const hue_rad = @mod(atan2(b, a), 2 * pi);
+    const huePrime = if (radiansToDegrees(hue_rad) < 20.14) hue_rad + 2 * pi + 2 else hue_rad + 2;
+    const eHue = @cos(huePrime) + 3.8;
+    const p1 = eHue * p1k;
+    const t = p1 * hypot(a, b) / (u + 0.305);
+    const jdiv100 = pow(f32, ac, cz);
+    const alpha = alphak * pow(f32, t, 0.9);
+    const chroma = alpha * @sqrt(jdiv100);
+    return chroma;
+}
+
 pub fn maxChroma(hue: f32, tone: f32) f32 {
     const y = yFromLstar(tone);
     const hueRadians = degreesToRadians(@mod(hue, 360.0));
