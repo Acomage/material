@@ -143,6 +143,14 @@ fn hueOf(y: f32, linrgb: Vec3) f32 {
     return atan2(b, a);
 }
 
+fn hueOfBuildTime(linrgb: Vec3) f32 {
+    const scaled = mul(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
+    const rgbA = chromaticAdaptationVOld(scaled);
+    const a = dot(aVec, rgbA);
+    const b = dot(bVec, rgbA);
+    return atan2(b, a);
+}
+
 // get this by solving equations:
 // SCALED_DISCOUNT_FROM_LINRGB v = [1,1,1]
 // v.x = 100
@@ -264,6 +272,29 @@ fn bisectToLimit(y: f32, targetHue: f32) Vec3 {
     return (left + right) * half;
 }
 
+fn bisectToLimitBuildTime(y: f32, targetHue: f32) Vec3 {
+    var left, var right = bisectToSegment(y, targetHue);
+    const hueLeft = hueOfBuildTime(left);
+    const half = @as(Vec3, @splat(0.5));
+    var mid = (left + right) * half;
+    var midHue = hueOfBuildTime(mid);
+    const n: u8 = 8;
+    const epsilon = @as(Vec3, @splat(0.1));
+    inline for (0..n) |_| {
+        if (@reduce(.And, @abs(right - left) <= epsilon)) {
+            break;
+        }
+        mid = (left + right) * half;
+        midHue = hueOfBuildTime(mid);
+        if (areInCycleOrder(hueLeft, targetHue, midHue)) {
+            right = mid;
+        } else {
+            left = mid;
+        }
+    }
+    return (left + right) * half;
+}
+
 fn findResultByJ(hueRadians: f32, chroma: f32, y: f32) u32 {
     const maxIter = 5;
     const tol = 0.002;
@@ -335,7 +366,7 @@ pub fn maxChromaBuildTime(hue: f32, tone: f32) f32 {
 pub fn maxChroma(hue: f32, tone: f32) f32 {
     const y = yFromLstar(tone);
     const hueRadians = degreesToRadians(@mod(hue, 360.0));
-    const linrgb = bisectToLimit(y, hueRadians);
+    const linrgb = bisectToLimitBuildTime(y, hueRadians);
     const scaled = mul(linrgb, SCALED_DISCOUNT_FROM_LINRGB);
     const rgbA = if (y >= yLowerEpsilon or y <= ySingular - yUpperEpsilon) chromaticAdaptationV(scaled) else chromaticAdaptationVOld(scaled);
     const a = dot(aVec, rgbA);
